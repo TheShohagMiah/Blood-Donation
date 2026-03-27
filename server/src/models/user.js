@@ -53,7 +53,7 @@ const userSchema = new mongoose.Schema(
     },
     role: {
       type: String,
-      enum: ["donor", "admin", "volunteer "],
+      enum: ["donor", "admin", "volunteer"],
       default: "donor",
     },
     status: {

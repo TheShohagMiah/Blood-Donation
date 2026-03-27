@@ -101,16 +101,11 @@ export const logout = (req, res, next) => {
   });
 };
 
-/**
- * @desc    Get all users (Admin Only)
- * @route   GET /api/v1/admin/users
- * @access  Private/Admin
- */
 export const getAllUsers = async (req, res, next) => {
   // Use .lean() for faster read-only performance in large datasets
   const users = await User.find().select("-password").sort({ createdAt: -1 });
 
-  if (!users) {
+  if (!users || users.length === 0) {
     const error = new Error("No users found.");
     error.statusCode = 404;
     return next(error);
@@ -121,4 +116,103 @@ export const getAllUsers = async (req, res, next) => {
     count: users.length,
     users,
   });
+};
+
+export const updateUserRole = async (req, res, next) => {
+  try {
+    const id = req.params.id;
+    const { role } = req.body;
+
+    const allowedRoles = ["admin", "donor", "volunteer"];
+    if (!allowedRoles.includes(role)) {
+      const error = new Error("Invalid role value.");
+      error.statusCode = 400;
+      return next(error);
+    }
+
+    const user = await User.findById(id);
+    if (!user) {
+      const error = new Error("User no longer exists.");
+      error.statusCode = 404;
+      return next(error);
+    }
+
+    const isAdmin = req.user.role === "admin";
+    if (!isAdmin) {
+      const error = new Error("Only admin can update users status.");
+      error.statusCode = 403;
+      return next(error);
+    }
+
+    if (user.role === role) {
+      const error = new Error(`User already has role: ${role}`);
+      error.statusCode = 400;
+      return next(error);
+    }
+
+    user.role = role;
+    await user.save();
+
+    res.status(200).json({
+      success: true,
+      message: "User role has been updated successfully.",
+      user: {
+        id: user._id,
+        name: user.name,
+        role: user.role,
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const updateUserStatus = async (req, res, next) => {
+  try {
+    const id = req.params.id;
+    const { status } = req.body;
+
+    const allowedStatuses = ["active", "blocked"];
+    if (!allowedStatuses.includes(status)) {
+      const error = new Error("Invalid status value.");
+      error.statusCode = 400;
+      return next(error);
+    }
+
+    const user = await User.findById(id);
+    if (!user) {
+      const error = new Error("User no longer exists.");
+      error.statusCode = 404;
+      return next(error);
+    }
+
+    const isAdmin = req.user.role === "admin";
+    if (!isAdmin) {
+      const error = new Error("Only admin can update users status.");
+      error.statusCode = 403;
+      return next(error);
+    }
+
+    // Check if status is already set to the requested value
+    if (user.status === status) {
+      const error = new Error(`User status is already ${status}`);
+      error.statusCode = 400;
+      return next(error);
+    }
+
+    user.status = status;
+    await user.save();
+
+    res.status(200).json({
+      success: true,
+      message: "Status has been updated successfully.",
+      user: {
+        id: user._id,
+        name: user.name,
+        status: user.status,
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
 };

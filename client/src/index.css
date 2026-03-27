@@ -7,6 +7,8 @@
    1. TAILWIND v4 IMPORT
    (v3-এর 3টা @tailwind directive এখন শুধু একটা @import)
 ───────────────────────────────────────── */
+@import url('https://fonts.googleapis.com/css2?family=Raleway:ital,wght@0,100..900;1,100..900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300..700&display=swap');
 @import "tailwindcss";
 
 
@@ -32,8 +34,8 @@
   --color-primary-300: #93c5fd;
   --color-primary-400: #60a5fa;
   --color-primary-500: #3b82f6;
-  --color-primary-600: #2563eb;
-  --color-primary-700: #1d4ed8;
+  --color-primary-600: #9900e0;
+  --color-primary-700: #6d28d9;
   --color-primary-800: #1e40af;
   --color-primary-900: #1e3a8a;
 
@@ -194,7 +196,8 @@
     -moz-osx-font-smoothing: grayscale;
   }
 
-  body {
+  body { 
+    font-family: "Space Grotesk", sans-serif;
     background-color: var(--color-surface-primary);
     color: var(--color-content-primary);
     line-height: 1.6;
@@ -274,7 +277,7 @@
     @apply inline-flex items-center justify-center gap-2
            font-medium cursor-pointer select-none
            disabled:opacity-50 disabled:cursor-not-allowed;
-    border-radius:  var(--radius-md);
+    border-radius:  var(--radius-sm);
     transition:     all var(--duration-fast) var(--ease-smooth);
   }
   .btn-sm  { @apply px-3   py-1.5 text-sm;  }
@@ -421,17 +424,25 @@
 
   /* Animations */
   .animate-fade-in  { animation: fadeIn  var(--duration-base) var(--ease-smooth) both; }
-  .animate-slide-up { animation: slideUp 300ms             var(--ease-smooth) both; }
-  .animate-scale-in { animation: scaleIn 200ms             var(--ease-smooth) both; }
+  .animate-slide-up { animation: slideUp 300ms var(--ease-smooth) both; }
+  .animate-slide-down { animation: slideDown 300ms var(--ease-smooth) both; }
+  .animate-scale-in { animation: scaleIn 200ms var(--ease-smooth) both; }
 
   @keyframes fadeIn {
     from { opacity: 0; }
     to   { opacity: 1; }
   }
+  
   @keyframes slideUp {
     from { opacity: 0; transform: translateY(20px); }
     to   { opacity: 1; transform: translateY(0); }
   }
+  
+  @keyframes slideDown {
+    from { opacity: 0; transform: translateY(-10px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  
   @keyframes scaleIn {
     from { opacity: 0; transform: scale(0.95); }
     to   { opacity: 1; transform: scale(1); }
