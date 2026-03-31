@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   MoreHorizontal,
   Mail,
@@ -11,11 +11,15 @@ import {
   Filter,
 } from "lucide-react";
 import { users as initialData } from "../../data/user";
+import { useGetAllUsersQuery } from "../../redux/features/isAuth/authApi";
+import Loader from "../../ui/Loader";
 
 const statusOptions = ["all", "active", "blocked"];
 
 const AllUsers = () => {
-  const [allUsers, setAllUsers] = useState(initialData);
+  const { data, isLoading } = useGetAllUsersQuery();
+
+  const [allUsers, setAllUsers] = useState([]);
   const [activeMenu, setActiveMenu] = useState(null);
   const [filter, setFilter] = useState("all");
 
@@ -25,6 +29,15 @@ const AllUsers = () => {
     );
     setActiveMenu(null);
   };
+
+  useEffect(() => {
+    if (data?.users) {
+      setAllUsers(data?.users);
+    }
+  }, [data]);
+  if (isLoading) {
+    return <Loader />;
+  }
 
   const filteredUsers = allUsers.filter((user) =>
     filter === "all" ? true : user.status === filter,
@@ -91,7 +104,7 @@ const AllUsers = () => {
                   key={user.id}
                   className="group hover:bg-[var(--color-surface-tertiary)] transition-all duration-200"
                 >
-                  <td className="px-8 py-6">
+                  <td className="px-8 py-2">
                     <div className="flex items-center gap-4">
                       <div className="relative">
                         <img
@@ -117,9 +130,9 @@ const AllUsers = () => {
                       </div>
                     </div>
                   </td>
-                  <td className="px-8 py-6">
+                  <td className="px-8 py-2">
                     <span
-                      className={`badge ${
+                      className={`badge capitalize ${
                         user.role === "admin"
                           ? "badge-info"
                           : user.role === "donor"
@@ -130,7 +143,7 @@ const AllUsers = () => {
                       {user.role}
                     </span>
                   </td>
-                  <td className="px-8 py-6">
+                  <td className="px-8 py-2">
                     <span
                       className={`text-[11px] font-black uppercase tracking-wider px-3 py-1 rounded-full ${
                         user.status === "active"
@@ -141,24 +154,24 @@ const AllUsers = () => {
                       {user.status}
                     </span>
                   </td>
-                  <td className="px-8 py-6 text-right relative">
+                  <td className="px-8 py-2 text-right relative">
                     <button
                       onClick={() =>
-                        setActiveMenu(activeMenu === user.id ? null : user.id)
+                        setActiveMenu(activeMenu === user._id ? null : user._id)
                       }
                       className="btn btn-ghost !p-2 rounded-[var(--radius-md)]"
                     >
                       <MoreHorizontal size={20} />
                     </button>
 
-                    {activeMenu === user.id && (
+                    {activeMenu === user._id && (
                       <div className="absolute right-12 top-16 w-56 bg-[var(--color-surface-card)] border border-[var(--color-border-default)] rounded-[var(--radius-xl)] shadow-[var(--shadow-xl)] z-[var(--z-dropdown)] py-2 text-left animate-scale-in">
                         <div className="px-4 py-2 text-[10px] font-bold text-[var(--color-content-muted)] uppercase tracking-widest">
                           Account Security
                         </div>
                         <button
                           onClick={() =>
-                            updateUser(user.id, {
+                            updateUser(user._id, {
                               status:
                                 user.status === "active" ? "blocked" : "active",
                             })

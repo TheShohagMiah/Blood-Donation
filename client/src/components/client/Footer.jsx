@@ -1,15 +1,6 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import {
-  Droplet,
-  Facebook,
-  Twitter,
-  Instagram,
-  Mail,
-  Phone,
-  MapPin,
-  Send,
-} from "lucide-react";
+import { Droplet, Mail, Phone, MapPin, Send } from "lucide-react";
 
 const Footer = () => {
   const currentYear = new Date().getFullYear();
@@ -94,7 +85,7 @@ const Footer = () => {
               Connect
             </h3>
             <div className="flex gap-3">
-              {[Facebook, Twitter, Instagram].map((Icon, i) => (
+              {[].map((Icon, i) => (
                 <a
                   key={i}
                   href="#"

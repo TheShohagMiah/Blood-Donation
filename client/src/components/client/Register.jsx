@@ -1,11 +1,10 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import {
   User as UserIcon,
   Mail,
   Lock,
   Droplet,
-  MapPin,
   ArrowRight,
 } from "lucide-react";
 import Input from "../../ui/Input";
@@ -13,191 +12,178 @@ import Select from "../../ui/Select";
 import { districts } from "../../data/districts";
 import { upazilas } from "../../data/upazilas";
 import Button from "../../ui/Button";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { useUserRegistrationMutation } from "../../redux/features/isAuth/authApi";
+// Recommended for professional feedback
+
 const RegisterForm = () => {
+  const navigate = useNavigate();
+  // ⚡️ Fix 1: RTK Mutation Hook returns [trigger, result]
+  const [registerUser, { isLoading, isSuccess }] =
+    useUserRegistrationMutation();
+
   const {
     register,
     handleSubmit,
-    formState: { errors, isSubmitting },
+    formState: { errors },
     watch,
   } = useForm({
     defaultValues: {
       role: "donor",
       bloodGroup: "",
+      district: "",
+      upazila: "",
     },
   });
 
-  const onSubmit = async (data) => {
-    console.log("Registering User:", data);
-  };
-
+  // ⚡️ Fix 2: Dynamic Filtering Logic
+  const selectedDistrictName = watch("district");
   const password = watch("password");
 
+  const filteredUpazilas = upazilas
+    .filter((u) => {
+      const dist = districts.find((d) => d.name === selectedDistrictName);
+      return dist ? u.district_id === dist.id : true;
+    })
+    .sort((a, b) => a.name.localeCompare(b.name));
+
+  const onSubmit = async (data) => {
+    try {
+      // Remove confirmPassword before sending to server
+      const { confirmPassword, ...submitData } = data;
+      await registerUser(submitData).unwrap();
+    } catch (err) {
+      console.error(err?.data?.message || "Registration failed");
+    }
+  };
+
   return (
-    <div className="max-w-2xl mx-auto py-12 px-4 animate-fade-in">
-      <div className="card shadow-[var(--shadow-xl)] border-[var(--color-border-strong)] p-8 md:p-10">
-        <header className="mb-15 text-center ">
-          <h2 className="text-3xl font-bold text-[var(--color-content-primary)]">
+    <div className="max-w-2xl mx-auto py-10 px-4 animate-in fade-in duration-500">
+      <div className="bg-[var(--color-surface-card)] shadow-2xl border border-[var(--color-border-default)] rounded-[2.5rem] p-8 md:p-12">
+        <header className="mb-10 text-center">
+          <h2 className="text-3xl font-black uppercase tracking-tighter text-[var(--color-content-primary)]">
             Create Account
           </h2>
-          <p className="text-sm font-light text-[var(--color-content-muted)] mt-2">
-            Join our network to help save lives through blood donation.
+          <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[var(--color-primary-600)] mt-2">
+            Secure Terminal Onboarding
           </p>
         </header>
 
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-          {/* Section: Basic Info */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+          {/* Identity Group */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <Input
               label="Full Name"
               icon={UserIcon}
               placeholder="John Doe"
               error={errors.name?.message}
-              {...register("name", {
-                required: "Name is required",
-                minLength: { value: 3, message: "Minimum 3 characters" },
-              })}
+              {...register("name", { required: "Name is required" })}
             />
-
             <Input
               label="Email Address"
               type="email"
               icon={Mail}
-              placeholder="john@example.com"
+              placeholder="john@flow.com"
               error={errors.email?.message}
-              {...register("email", {
-                required: "Email is required",
-                pattern: {
-                  value: /^\S+@\S+$/i,
-                  message: "Invalid email address",
-                },
-              })}
+              {...register("email", { required: "Email is required" })}
             />
           </div>
 
-          {/* Section: Blood & Role */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
+          {/* Medical & Role Group */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <Select
               label="Blood Group"
               icon={Droplet}
               error={errors.bloodGroup?.message}
-              {...register("bloodGroup", {
-                required: "Blood group is required",
-              })}
+              {...register("bloodGroup", { required: "Select blood group" })}
             >
               <option value="">Select Group</option>
-              {["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"].map(
-                (group) => (
-                  <option key={group} value={group}>
-                    {group}
-                  </option>
-                ),
-              )}
+              {["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"].map((g) => (
+                <option key={g} value={g}>
+                  {g}
+                </option>
+              ))}
             </Select>
 
             <Select
-              label="Role"
+              label="System Role"
               error={errors.role?.message}
-              {...register("role", {
-                required: "User role is required",
-              })}
+              {...register("role", { required: "Role is required" })}
             >
-              <option value="">Select Group</option>
-              {["donor", "volunteer"].map((role) => (
-                <option className="capitalize" key={role} value={role}>
-                  {role}
+              <option value="donor">Donor</option>
+              <option value="volunteer">Volunteer</option>
+            </Select>
+          </div>
+
+          {/* Location Group - Dynamic */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <Select
+              label="District"
+              error={errors.district?.message}
+              {...register("district", { required: "Select district" })}
+            >
+              <option value="">Select District</option>
+              {[...districts]
+                .sort((a, b) => a.name.localeCompare(b.name))
+                .map((d) => (
+                  <option key={d.id} value={d.name}>
+                    {d.name}
+                  </option>
+                ))}
+            </Select>
+
+            <Select
+              label="Upazila"
+              disabled={!selectedDistrictName}
+              error={errors.upazila?.message}
+              {...register("upazila", { required: "Select upazila" })}
+            >
+              <option value="">Select Upazila</option>
+              {filteredUpazilas.map((u) => (
+                <option key={u.id} value={u.name}>
+                  {u.name}
                 </option>
               ))}
             </Select>
           </div>
 
-          {/* Section: Location */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
-            <Select
-              label="Select District"
-              error={errors.district?.message}
-              {...register("district", {
-                required: "District is required",
-              })}
-            >
-              <option value="">Select District</option>
-              {districts
-                .concat()
-                .sort((a, b) => a.name.localeCompare(b.name))
-                .map((district) => (
-                  <option key={district.id} value={district.name}>
-                    {district.name}
-                  </option>
-                ))}
-            </Select>
-            <Select
-              label="Select Upazila"
-              error={errors.upazila?.message}
-              {...register("upazila", {
-                required: "Upazila group is required",
-              })}
-            >
-              <option value="">Select Upazila</option>
-              {upazilas
-                .concat()
-                .sort((a, b) => a.name.localeCompare(b.name))
-                .map((upazila) => (
-                  <option key={upazila.id} value={upazila.name}>
-                    {upazila.name}
-                  </option>
-                ))}
-            </Select>
-          </div>
-
-          {/* Section: Password */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
+          {/* Security Group */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <Input
-              label="Password"
+              label="Access Password"
               type="password"
               icon={Lock}
               error={errors.password?.message}
-              {...register("password", {
-                required: "Password is required",
-                minLength: { value: 8, message: "Min 8 characters" },
-              })}
+              {...register("password", { required: "Required", minLength: 8 })}
             />
-
             <Input
-              label="Confirm Password"
+              label="Verify Password"
               type="password"
               icon={Lock}
               error={errors.confirmPassword?.message}
               {...register("confirmPassword", {
-                validate: (value) =>
-                  value === password || "Passwords do not match",
+                validate: (v) => v === password || "Match failed",
               })}
             />
           </div>
 
-          <div className="pt-4">
-            <Button
-              type="submit"
-              variant="primary"
-              isLoading={isSubmitting}
-              className="w-full"
-            >
-              Register Now
-            </Button>
-          </div>
+          <Button
+            type="submit"
+            variant="primary"
+            className="w-full py-4 text-[11px] font-black uppercase tracking-[0.3em] shadow-xl shadow-red-500/10"
+            isLoading={isLoading}
+          >
+            Finalize Registration
+          </Button>
         </form>
 
-        {/* Footer Link */}
-        <p className="text-center text-sm text-[var(--color-content-muted)] mt-5">
-          Already have an account?{" "}
+        <p className="text-center text-[10px] font-bold uppercase tracking-widest text-[var(--color-content-muted)] mt-8">
+          Already Enlisted?{" "}
           <Link
             to="/login"
-            className="font-bold text-[var(--color-content-primary)] hover:underline inline-flex items-center gap-1 group"
+            className="text-[var(--color-content-primary)] hover:text-[var(--color-primary-600)] transition-colors inline-flex items-center gap-2"
           >
-            Log in
-            <ArrowRight
-              size={14}
-              className="group-hover:translate-x-1 transition-transform"
-            />
+            Access Terminal <ArrowRight size={12} />
           </Link>
         </p>
       </div>

@@ -1,8 +1,8 @@
 import React, { useEffect } from "react";
-import { navLinks } from "../../data/navLinks";
 import { NavLink, useLocation } from "react-router-dom";
 import { ChevronDown, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { navLinks } from "../../data/navLinks";
 
 const Sidebar = ({
   isCollapsed,
@@ -20,241 +20,157 @@ const Sidebar = ({
 
   const filterNavLinks = navLinks.filter((l) => l.roles.includes(userRole));
 
-  const sidebarWidth = isCollapsed ? "md:w-20" : "md:w-72";
-
-  // ✅ Auto close submenu when collapsed
+  // ✅ Auto close submenu when collapsed to prevent floating menus
   useEffect(() => {
     if (isCollapsed) setIsSubMenuOpen(null);
   }, [isCollapsed, setIsSubMenuOpen]);
 
-  // ✅ Close mobile menu on route change
-  useEffect(() => {
-    setIsMobileMenuOpen(false);
-  }, [location.pathname, setIsMobileMenuOpen]);
-
-  // ✅ Prevent body scroll when mobile menu is open
-  useEffect(() => {
-    if (isMobileMenuOpen) {
-      document.body.style.overflow = "hidden";
-    } else {
-      document.body.style.overflow = "unset";
-    }
-
-    return () => {
-      document.body.style.overflow = "unset";
-    };
-  }, [isMobileMenuOpen]);
+  // ✅ UI Helpers for cleaner JSX
+  const activeClass =
+    "bg-[var(--color-primary-600)] text-white shadow-md shadow-[var(--color-primary-subtle)]";
+  const inactiveClass =
+    "text-[var(--color-content-muted)] hover:bg-[var(--color-surface-muted)] hover:text-[var(--color-content-primary)]";
+  const labelStyle = "text-[11px] font-bold uppercase tracking-[0.15em]";
 
   return (
-    <aside
-      className={`
-        fixed inset-y-0 left-0 z-50 
-        transition-all duration-300 ease-in-out 
-        border-r border-border-default bg-surface-secondary
-        ${sidebarWidth}
-        ${isMobileMenuOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"}
-        w-72
-      `}
-    >
-      <div className="flex flex-col h-full">
-        {/* Header */}
-        <div className="flex items-center justify-between h-16 md:h-20 px-4 sm:px-6 border-b border-border-default">
-          <span className="text-base md:text-lg font-semibold tracking-tight whitespace-nowrap text-content-primary">
-            {isCollapsed ? (
-              <span className="hidden md:inline">A</span>
-            ) : (
-              "Admin Console"
-            )}
-          </span>
-
-          {/* Mobile Close Button */}
-          <button
+    <>
+      {/* Mobile Overlay */}
+      <AnimatePresence>
+        {isMobileMenuOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
             onClick={() => setIsMobileMenuOpen(false)}
-            className="md:hidden p-2 rounded-md hover:bg-surface-tertiary transition"
-            aria-label="Close menu"
-          >
-            <X size={20} className="text-content-primary" />
-          </button>
-        </div>
+            className="fixed inset-0 bg-black/40 backdrop-blur-sm z-40 md:hidden"
+          />
+        )}
+      </AnimatePresence>
 
-        {/* Navigation */}
-        <nav className="p-3 sm:p-4 space-y-1.5 sm:space-y-2 overflow-y-auto flex-1">
-          {filterNavLinks.map((item, i) => {
-            const isParentActive =
-              item?.subMenu &&
-              item.subMenu.some((sub) =>
-                location.pathname.startsWith(sub.path),
+      <aside
+        className={`
+          fixed inset-y-0 left-0 z-50 
+          transition-all duration-300 ease-in-out 
+          border-r border-[var(--color-border-default)] bg-[var(--color-surface-card)]
+          ${isCollapsed ? "w-20" : "w-72"}
+          ${isMobileMenuOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"}
+        `}
+      >
+        <div className="flex flex-col h-full">
+          {/* Header */}
+          <div className="flex items-center justify-between h-20 px-6 border-b border-[var(--color-border-default)]">
+            <div className="flex items-center gap-3 overflow-hidden">
+              <div className="w-8 h-8 rounded bg-[var(--color-primary-600)] shrink-0 flex items-center justify-center text-white font-bold">
+                L
+              </div>
+              {!isCollapsed && (
+                <span className="text-sm font-bold tracking-tight text-[var(--color-content-primary)] whitespace-nowrap">
+                  Console{" "}
+                  <span className="text-[var(--color-primary-600)]">v1.0</span>
+                </span>
+              )}
+            </div>
+
+            <button
+              onClick={() => setIsMobileMenuOpen(false)}
+              className="md:hidden p-2 rounded-md hover:bg-[var(--color-surface-muted)] transition"
+            >
+              <X size={20} />
+            </button>
+          </div>
+
+          {/* Navigation */}
+          <nav className="p-4 space-y-2 overflow-y-auto flex-1 custom-scrollbar">
+            {filterNavLinks.map((item, i) => {
+              const isParentActive = item?.subMenu?.some(
+                (sub) => location.pathname === sub.path,
               );
+              const isOpen = isSubMenuOpen === i;
 
-            return (
-              <div key={i}>
-                {item?.subMenu ? (
-                  <>
-                    {/* 🔽 Parent Button */}
-                    <button
-                      onClick={() => toggleSubMenu(i)}
-                      className={`
-                        relative flex items-center gap-3 md:gap-4 px-3 py-2.5 rounded-sm w-full
-                        transition-all duration-200 group
-                        ${
-                          isParentActive
-                            ? "bg-primary-600 text-primary-50 rounded-sm text-lg  font-medium border-l-4 border-primary-700"
-                            : "text-content-secondary hover:bg-surface-tertiary hover:text-content-primary"
-                        }
+              return (
+                <div key={i} className="space-y-1">
+                  {item.subMenu ? (
+                    <>
+                      <button
+                        onClick={() => toggleSubMenu(i)}
+                        className={`
+                          w-full flex items-center gap-4 px-3 py-3 rounded-lg transition-all group
+                          ${isParentActive || isOpen ? "text-[var(--color-primary-600)] bg-[var(--color-primary-50)]/50" : inactiveClass}
+                        `}
+                      >
+                        <item.icon size={20} className="shrink-0" />
+                        {!isCollapsed && (
+                          <>
+                            <span className={`${labelStyle} flex-1 text-left`}>
+                              {item.name}
+                            </span>
+                            <ChevronDown
+                              size={14}
+                              className={`transition-transform duration-300 ${isOpen ? "rotate-180" : ""}`}
+                            />
+                          </>
+                        )}
+                      </button>
+
+                      <AnimatePresence>
+                        {isOpen && !isCollapsed && (
+                          <motion.div
+                            initial={{ height: 0, opacity: 0 }}
+                            animate={{ height: "auto", opacity: 1 }}
+                            exit={{ height: 0, opacity: 0 }}
+                            className="overflow-hidden ml-5 border-l border-[var(--color-border-default)] pl-4 space-y-1"
+                          >
+                            {item.subMenu.map((sub, subIdx) => (
+                              <NavLink
+                                key={subIdx}
+                                to={sub.path}
+                                className={({ isActive }) => `
+                                  block px-3 py-2 text-[13px] rounded-md transition-all
+                                  ${isActive ? "text-[var(--color-primary-600)] font-bold bg-[var(--color-primary-50)]" : "text-[var(--color-content-muted)] hover:text-[var(--color-content-primary)]"}
+                                `}
+                              >
+                                {sub.name}
+                              </NavLink>
+                            ))}
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </>
+                  ) : (
+                    <NavLink
+                      to={item.path}
+                      className={({ isActive }) => `
+                        flex items-center gap-4 px-3 py-3 rounded-lg transition-all
+                        ${isActive ? activeClass : inactiveClass}
                       `}
                     >
-                      <item.icon
-                        className={`w-5 h-5 shrink-0 ${
-                          isCollapsed ? "md:mx-auto" : ""
-                        } ${
-                          isParentActive
-                            ? "text-primary-600"
-                            : "text-content-secondary group-hover:text-primary-600"
-                        }`}
-                      />
-
+                      <item.icon size={20} className="shrink-0" />
                       {!isCollapsed && (
-                        <>
-                          <span className="text-sm tracking-wide flex-1 text-left">
-                            {item.name}
-                          </span>
-
-                          <ChevronDown
-                            className={`w-4 h-4 transition-transform duration-300 ${
-                              isSubMenuOpen === i ? "rotate-180" : ""
-                            }`}
-                          />
-                        </>
+                        <span className={labelStyle}>{item.name}</span>
                       )}
+                    </NavLink>
+                  )}
+                </div>
+              );
+            })}
+          </nav>
 
-                      {/* Mobile: Always show text */}
-                      <span className="md:hidden text-sm tracking-wide flex-1 text-left">
-                        {item.name}
-                      </span>
-                      <ChevronDown
-                        className={`md:hidden w-4 h-4 transition-transform duration-300 ${
-                          isSubMenuOpen === i ? "rotate-180" : ""
-                        }`}
-                      />
-                    </button>
-
-                    {/* ✨ Submenu */}
-                    <AnimatePresence>
-                      {isSubMenuOpen === i && !isCollapsed && (
-                        <motion.div
-                          initial={{ height: 0, opacity: 0 }}
-                          animate={{ height: "auto", opacity: 1 }}
-                          exit={{ height: 0, opacity: 0 }}
-                          transition={{
-                            duration: 0.3,
-                            ease: [0.4, 0, 0.2, 1],
-                          }}
-                          className="overflow-hidden"
-                        >
-                          <div className="ml-6 mt-2 space-y-1 border-l border-border-default pl-4">
-                            {item.subMenu.map((sub, subIndex) => (
-                              <NavLink
-                                end
-                                key={subIndex}
-                                to={sub.path}
-                                className={({ isActive }) => `
-                                  block px-3 py-2 text-sm rounded-sm transition-all duration-200
-                                  ${
-                                    isActive
-                                      ? "bg-primary-100 text-primary-600 border-r-2 border-primary-600 font-medium"
-                                      : "text-content-secondary hover:bg-surface-tertiary hover:text-content-primary"
-                                  }
-                                `}
-                              >
-                                {sub.name}
-                              </NavLink>
-                            ))}
-                          </div>
-                        </motion.div>
-                      )}
-
-                      {/* Mobile: Always show submenu when open */}
-                      {isSubMenuOpen === i && (
-                        <motion.div
-                          initial={{ height: 0, opacity: 0 }}
-                          animate={{ height: "auto", opacity: 1 }}
-                          exit={{ height: 0, opacity: 0 }}
-                          transition={{
-                            duration: 0.3,
-                            ease: [0.4, 0, 0.2, 1],
-                          }}
-                          className="md:hidden overflow-hidden"
-                        >
-                          <div className="ml-6 mt-2 space-y-1 border-l border-border-default pl-4">
-                            {item.subMenu.map((sub, subIndex) => (
-                              <NavLink
-                                end
-                                key={subIndex}
-                                to={sub.path}
-                                className={({ isActive }) => `
-                                  block px-3 py-2 rounded-md text-sm transition-all duration-200
-                                  ${
-                                    isActive
-                                      ? "bg-primary-100 text-primary-600 font-medium"
-                                      : "text-content-secondary hover:bg-surface-tertiary hover:text-content-primary"
-                                  }
-                                `}
-                              >
-                                {sub.name}
-                              </NavLink>
-                            ))}
-                          </div>
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
-                  </>
-                ) : (
-                  <NavLink
-                    onClick={() => setIsSubMenuOpen(null)}
-                    end
-                    to={item.path}
-                    className={({ isActive }) => `
-                      relative flex items-center gap-3 md:gap-4 px-3 py-2.5 rounded-sm 
-                      transition-all duration-200 group
-                      ${
-                        isActive
-                          ? "bg-primary-600 text-primary-50 font-medium "
-                          : "text-content-secondary hover:bg-surface-tertiary hover:text-content-primary"
-                      }
-                    `}
-                  >
-                    <item.icon
-                      className={`w-5 h-5 shrink-0 ${
-                        isCollapsed ? "md:mx-auto" : ""
-                      }`}
-                      style={{
-                        color: "currentColor",
-                      }}
-                    />
-
-                    {!isCollapsed && (
-                      <span className="text-sm tracking-wide">{item.name}</span>
-                    )}
-
-                    {/* Mobile: Always show text */}
-                    <span className="md:hidden text-sm tracking-wide">
-                      {item.name}
-                    </span>
-                  </NavLink>
-                )}
+          {/* Footer Info */}
+          {!isCollapsed && (
+            <div className="p-6 border-t border-[var(--color-border-default)]">
+              <div className="bg-[var(--color-surface-muted)] p-4 rounded-xl">
+                <p className="text-[10px] font-bold uppercase tracking-widest text-[var(--color-content-muted)]">
+                  Active Role
+                </p>
+                <p className="text-xs font-bold text-[var(--color-content-primary)] mt-1">
+                  {userRole}
+                </p>
               </div>
-            );
-          })}
-        </nav>
-
-        {/* Footer - Optional */}
-        <div className="p-4 border-t border-border-default">
-          <p className="text-xs text-content-muted text-center">
-            © 2024 Admin Console
-          </p>
+            </div>
+          )}
         </div>
-      </div>
-    </aside>
+      </aside>
+    </>
   );
 };
 

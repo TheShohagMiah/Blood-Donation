@@ -83,7 +83,7 @@ export const getMe = async (req, res, next) => {
 
   res.status(200).json({
     success: true,
-    user,
+    data: user,
   });
 };
 
@@ -118,6 +118,57 @@ export const getAllUsers = async (req, res, next) => {
   });
 };
 
+export const getDonors = async (req, res, next) => {
+  try {
+    const [totalDonors, donors] = await Promise.all([
+      User.countDocuments({ role: "donor", status: { $ne: "blocked" } }),
+      User.find({ role: "donor", status: { $ne: "blocked" } })
+        .select("-password")
+        .sort({ createdAt: -1 }),
+    ]);
+
+    // Check if donors exist
+    if (!donors || donors.length === 0) {
+      const error = new Error("No donors found in the records.");
+      error.statusCode = 404;
+      return next(error);
+    }
+
+    // Success response
+    res.status(200).json({
+      success: true,
+      count: totalDonors,
+      data: donors,
+    });
+  } catch (err) {
+    // Pass any database or execution errors to the global error handler
+    next(err);
+  }
+};
+
+export const getVolunteers = async (req, res, next) => {
+  try {
+    const [totalVolunteers, volunteers] = await Promise.all([
+      User.countDocuments({ role: "volunteer", status: { $ne: "blocked" } }),
+      User.find({ role: "volunteer", status: { $ne: "blocked" } })
+        .select("-password")
+        .sort({ createdAt: -1 }),
+    ]);
+
+    if (!volunteers || volunteers.length === 0) {
+      const error = new Error("No volunteers found in this record");
+      error.statusCode = 404;
+      return next(error);
+    }
+    res.status(200).json({
+      success: false,
+      count: totalVolunteers,
+      data: volunteers,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
 export const updateUserRole = async (req, res, next) => {
   try {
     const id = req.params.id;

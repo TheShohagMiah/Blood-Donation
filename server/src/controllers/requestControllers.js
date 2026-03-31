@@ -1,5 +1,4 @@
-import Request from "../models/bloodRequest.js";
-
+import Request from "../models/request.js";
 export const createRequest = async (req, res, next) => {
   try {
     const request = await Request.create({

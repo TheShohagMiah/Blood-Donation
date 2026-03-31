@@ -61,6 +61,18 @@ const userSchema = new mongoose.Schema(
       enum: ["active", "blocked"],
       default: "active",
     },
+    lastDonationDate: {
+      type: Date,
+      default: null,
+    },
+    isAvailable: {
+      type: Boolean,
+      default: true,
+    },
+    totalDonations: {
+      type: Number,
+      default: 0,
+    },
   },
   { timestamps: true },
 );

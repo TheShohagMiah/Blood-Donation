@@ -3,19 +3,18 @@ import Sidebar from "../components/admin/Sidebar";
 import Header from "../components/admin/Header";
 import { Outlet } from "react-router-dom";
 
-const AdminLayout = () => {
+const AdminLayout = ({ userRole }) => {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isSubMenuOpen, setIsSubMenuOpen] = useState(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
-  const user = { role: "admin" };
   // Desktop: sidebar width changes based on collapse state
   // Mobile: no margin (sidebar is overlay)
   const mainOffset = isCollapsed ? "md:ml-20" : "md:ml-72";
 
   return (
-    <div className="flex min-h-screen bg-surface-primary antialiased">
-      {/* Sidebar Navigation */}
+    <div className="flex min-h-screen bg-[var(--color-surface-main)] antialiased transition-colors duration-300">
+      {/* 1. Sidebar Navigation */}
       <Sidebar
         isCollapsed={isCollapsed}
         setIsCollapsed={setIsCollapsed}
@@ -23,22 +22,14 @@ const AdminLayout = () => {
         setIsSubMenuOpen={setIsSubMenuOpen}
         isMobileMenuOpen={isMobileMenuOpen}
         setIsMobileMenuOpen={setIsMobileMenuOpen}
-        userRole={user.role}
+        userRole={userRole || "admin"} // Pass role from props
       />
 
-      {/* Mobile Backdrop Overlay */}
-      {isMobileMenuOpen && (
-        <div
-          className="fixed inset-0 bg-surface-overlay z-40 md:hidden"
-          onClick={() => setIsMobileMenuOpen(false)}
-          aria-hidden="true"
-        />
-      )}
-
-      {/* Main Layout Area */}
+      {/* 2. Main Layout Area */}
       <div
         className={`flex flex-col flex-1 transition-all duration-300 ease-in-out ${mainOffset}`}
       >
+        {/* Sticky Header with Backdrop Blur */}
         <Header
           isCollapsed={isCollapsed}
           setIsCollapsed={setIsCollapsed}
@@ -46,9 +37,30 @@ const AdminLayout = () => {
           setIsMobileMenuOpen={setIsMobileMenuOpen}
         />
 
+        {/* 3. Dashboard Content */}
         <main className="flex-1 p-4 sm:p-6 md:p-8 lg:p-10">
-          <Outlet />
+          {/* Max-width container for better data scannability */}
+          <div className="max-w-[1600px] mx-auto animate-in fade-in slide-in-from-bottom-2 duration-500">
+            <Outlet />
+          </div>
         </main>
+
+        {/* 4. Subtle Footer for Admin Console */}
+        <footer className="px-10 py-6 border-t border-[var(--color-border-default)]">
+          <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+            <p className="text-[10px] font-bold uppercase tracking-widest text-[var(--color-content-muted)]">
+              &copy; 2026 LifeFlow Terminal &bull; Industrial Healthcare Systems
+            </p>
+            <div className="flex gap-6">
+              <span className="text-[10px] font-bold uppercase tracking-widest text-[var(--color-primary-600)] cursor-pointer hover:underline">
+                System Status: Online
+              </span>
+              <span className="text-[10px] font-bold uppercase tracking-widest text-[var(--color-content-muted)]">
+                v1.2.4-stable
+              </span>
+            </div>
+          </div>
+        </footer>
       </div>
     </div>
   );

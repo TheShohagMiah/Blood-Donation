@@ -1,5 +1,21 @@
-import { Bell, Command, Menu, Moon, Search, Sun, User, X } from "lucide-react";
 import React, { useEffect, useRef, useState } from "react";
+import { useLocation, Link, useNavigate } from "react-router-dom";
+import {
+  Bell,
+  Command,
+  Menu,
+  Moon,
+  Search,
+  Sun,
+  User,
+  X,
+  LogOut,
+  Settings,
+  ChevronRight,
+} from "lucide-react";
+import { useLogoutMutation } from "../../redux/features/isAuth/authApi";
+import { logout } from "../../redux/slices/authSlice";
+import { useDispatch } from "react-redux";
 
 const Header = ({
   isCollapsed,
@@ -7,6 +23,10 @@ const Header = ({
   isMobileMenuOpen,
   setIsMobileMenuOpen,
 }) => {
+  const [userLogoutFromServer, { isLoading }] = useLogoutMutation();
+  const navigate = useNavigate();
+  const dispatch = useDispatch();
+
   const [profileOpen, setProfileOpen] = useState(false);
   const [notificationOpen, setNotificationOpen] = useState(false);
   const [darkMode, setDarkMode] = useState(false);
@@ -14,221 +34,195 @@ const Header = ({
 
   const profileRef = useRef(null);
   const notificationRef = useRef(null);
+  const location = useLocation();
 
-  // ✅ Outside click handler
+  // Generate Breadcrumbs from URL
+  const pathnames = location.pathname.split("/").filter((x) => x);
+
   useEffect(() => {
     const outSideClickHandler = (e) => {
-      if (profileRef.current && !profileRef.current.contains(e.target)) {
+      if (profileRef.current && !profileRef.current.contains(e.target))
         setProfileOpen(false);
-      }
       if (
         notificationRef.current &&
         !notificationRef.current.contains(e.target)
-      ) {
+      )
         setNotificationOpen(false);
-      }
     };
-
     document.addEventListener("mousedown", outSideClickHandler);
     return () => document.removeEventListener("mousedown", outSideClickHandler);
   }, []);
 
-  // ✅ Keyboard shortcut (Ctrl/Cmd + K)
   useEffect(() => {
     const keyboardHandler = (e) => {
       if ((e.metaKey || e.ctrlKey) && e.key === "k") {
         e.preventDefault();
-        const searchInput =
-          document.getElementById("header-search") ||
-          document.getElementById("mobile-search");
-        searchInput?.focus();
-        if (window.innerWidth < 768) {
-          setMobileSearchOpen(true);
-        }
+        document.getElementById("header-search")?.focus();
+        if (window.innerWidth < 768) setMobileSearchOpen(true);
       }
     };
-
     document.addEventListener("keydown", keyboardHandler);
     return () => document.removeEventListener("keydown", keyboardHandler);
   }, []);
 
-  // ✅ Dark mode toggle
   useEffect(() => {
     document.documentElement.classList.toggle("dark", darkMode);
   }, [darkMode]);
 
+  const handleLogout = async () => {
+    try {
+      await userLogoutFromServer();
+      dispatch(logout());
+      navigate("/login", { replace: true });
+    } catch (error) {}
+  };
+
   return (
     <>
-      <header className="sticky top-0 z-40 flex items-center justify-between h-16 md:h-20 px-4 sm:px-6 md:px-8 border-b border-border-default bg-surface-secondary/80 backdrop-blur-md">
-        {/* LEFT */}
-        <div className="flex items-center gap-3 md:gap-6">
-          {/* Mobile Hamburger Menu */}
+      <header className="sticky top-0 z-40 flex items-center justify-between h-20 px-6 border-b border-[var(--color-border-default)] bg-[var(--color-surface-main)]/80 backdrop-blur-md">
+        {/* LEFT: Menu & Breadcrumbs */}
+        <div className="flex items-center gap-4">
           <button
-            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            className="md:hidden p-2 rounded-md hover:bg-surface-tertiary transition active:scale-95"
-            aria-label="Toggle mobile menu"
+            onClick={() =>
+              window.innerWidth < 768
+                ? setIsMobileMenuOpen(!isMobileMenuOpen)
+                : setIsCollapsed(!isCollapsed)
+            }
+            className="p-2 rounded-lg hover:bg-[var(--color-surface-muted)] transition-colors text-[var(--color-content-primary)]"
           >
-            {isMobileMenuOpen ? (
-              <X size={20} className="text-content-primary" />
-            ) : (
-              <Menu size={20} className="text-content-primary" />
-            )}
+            {isMobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
           </button>
 
-          {/* Desktop Sidebar Toggle */}
-          <button
-            onClick={() => setIsCollapsed(!isCollapsed)}
-            className="hidden md:block p-2 rounded-md hover:bg-surface-tertiary transition active:scale-95"
-            aria-label="Toggle sidebar"
-          >
-            <svg
-              className={`w-5 h-5 transition-transform duration-300 text-content-primary ${
-                isCollapsed ? "rotate-180" : ""
-              }`}
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={1.5}
-                d="M11 19l-7-7 7-7m8 14l-7-7 7-7"
-              />
-            </svg>
-          </button>
-
-          {/* Desktop Search */}
-          <div className="relative hidden md:block max-w-md w-full group">
-            <Search
-              size={16}
-              className="absolute left-4 top-1/2 -translate-y-1/2 text-content-muted"
-            />
-
-            <input
-              id="header-search"
-              type="text"
-              placeholder="Search..."
-              className="w-full bg-surface-secondary/50 border border-border-default py-2.5 pl-12 pr-14 rounded-2xl text-sm outline-none 
-              focus:bg-surface-card focus:border-primary-600 focus:ring-2 focus:ring-primary-200 
-              transition-all text-content-primary placeholder:text-content-muted"
-            />
-
-            <div className="absolute right-4 top-1/2 -translate-y-1/2 hidden lg:flex items-center gap-1 px-2 py-1 border border-border-default rounded-lg shadow-sm bg-surface-tertiary">
-              <Command size={10} />
-              <span className="text-[10px] font-bold">K</span>
-            </div>
+          <div className="hidden lg:flex items-center gap-2 text-[11px] font-bold uppercase tracking-widest text-[var(--color-content-muted)]">
+            <span className="hover:text-[var(--color-primary-600)] cursor-pointer transition-colors">
+              Console
+            </span>
+            {pathnames.map((name, index) => (
+              <React.Fragment key={index}>
+                <ChevronRight size={12} className="opacity-40" />
+                <span
+                  className={
+                    index === pathnames.length - 1
+                      ? "text-[var(--color-primary-600)]"
+                      : ""
+                  }
+                >
+                  {name.replace("-", " ")}
+                </span>
+              </React.Fragment>
+            ))}
           </div>
-
-          {/* Mobile Search Toggle */}
-          <button
-            onClick={() => setMobileSearchOpen(!mobileSearchOpen)}
-            className="md:hidden p-2 rounded-md hover:bg-surface-tertiary transition active:scale-95"
-            aria-label="Toggle search"
-          >
-            <Search size={18} className="text-content-primary" />
-          </button>
         </div>
 
-        {/* RIGHT */}
-        <div className="flex items-center gap-2 sm:gap-3 md:gap-4">
-          {/* 🌙 Dark Mode */}
+        {/* CENTER: Industrial Search */}
+        <div className="relative hidden md:block max-w-md w-full mx-8 border border-border-default rounded-full">
+          <Search
+            size={16}
+            className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--color-content-muted)]"
+          />
+          <input
+            id="header-search"
+            type="text"
+            placeholder="Search commands..."
+            className="w-full bg-[var(--color-surface-muted)] border border-transparent py-2.5 pl-12 pr-14 rounded-xl text-xs outline-none focus:border-[var(--color-primary-600)] focus:bg-[var(--color-surface-main)] transition-all"
+          />
+          <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1 px-1.5 py-1 rounded bg-[var(--color-surface-main)] border border-[var(--color-border-default)]">
+            <Command size={10} className="text-[var(--color-content-muted)]" />
+            <span className="text-[9px] font-black text-[var(--color-content-muted)]">
+              K
+            </span>
+          </div>
+        </div>
+
+        {/* RIGHT: Actions */}
+        <div className="flex items-center gap-3">
+          {/* Theme Toggle */}
           <button
             onClick={() => setDarkMode(!darkMode)}
-            className="flex items-center justify-center w-9 h-9 rounded-full hover:bg-surface-tertiary border border-border-default transition active:scale-95 cursor-pointer"
-            aria-label="Toggle dark mode"
+            className="p-2.5 rounded-xl border border-[var(--color-border-default)] hover:bg-[var(--color-surface-muted)] transition-all text-[var(--color-content-primary)]"
           >
-            {darkMode ? (
-              <Sun size={16} className="text-content-primary" />
-            ) : (
-              <Moon size={16} className="text-content-primary" />
-            )}
+            {darkMode ? <Sun size={18} /> : <Moon size={18} />}
           </button>
 
-          {/* 🔔 Notifications */}
-          <div ref={notificationRef} className="relative hidden sm:block">
+          {/* Notifications */}
+          <div ref={notificationRef} className="relative">
             <button
               onClick={() => setNotificationOpen(!notificationOpen)}
-              className="flex items-center justify-center w-9 h-9 rounded-full hover:bg-surface-tertiary border border-border-default transition active:scale-95 cursor-pointer"
-              aria-label="Notifications"
+              className="p-2.5 rounded-xl border border-[var(--color-border-default)] hover:bg-[var(--color-surface-muted)] transition-all text-[var(--color-content-primary)] relative"
             >
-              <Bell size={16} className="text-content-primary" />
+              <Bell size={18} />
+              <span className="absolute top-2 right-2 w-2 h-2 bg-[var(--color-primary-600)] rounded-full border-2 border-[var(--color-surface-main)]" />
             </button>
-
             {notificationOpen && (
-              <div className="absolute right-0 mt-3 w-72 bg-surface-card border border-border-default rounded-xl shadow-lg p-4 z-50">
-                <h4 className="text-sm font-semibold mb-2 text-content-primary">
-                  Notifications
-                </h4>
-                <p className="text-xs text-content-muted">
-                  No new notifications
-                </p>
+              <div className="absolute right-0 mt-3 w-80 bg-[var(--color-surface-card)] border border-[var(--color-border-default)] rounded-2xl shadow-xl overflow-hidden animate-in slide-in-from-top-2">
+                <div className="p-4 border-b border-[var(--color-border-default)] flex justify-between items-center">
+                  <h4 className="text-[11px] font-bold uppercase tracking-widest">
+                    Notifications
+                  </h4>
+                  <span className="text-[10px] text-[var(--color-primary-600)] font-bold cursor-pointer">
+                    Clear All
+                  </span>
+                </div>
+                <div className="p-8 text-center">
+                  <p className="text-xs text-[var(--color-content-muted)]">
+                    System is running smoothly. No new alerts.
+                  </p>
+                </div>
               </div>
             )}
           </div>
 
-          {/* 👤 Profile */}
-          <div ref={profileRef} className="relative">
+          {/* User Profile */}
+          <div ref={profileRef} className="relative ml-2">
             <button
               onClick={() => setProfileOpen(!profileOpen)}
-              className="flex items-center gap-2 px-3 md:px-4 py-1.5 rounded-full  hover:bg-surface-tertiary border border-border-default transition active:scale-95 cursor-pointer"
-              aria-label="User profile"
+              className="flex items-center gap-3 pl-1 pr-3 py-1 rounded-full border border-[var(--color-border-default)] hover:border-[var(--color-primary-600)] transition-all bg-[var(--color-surface-muted)]/50"
             >
-              <div className="w-6 h-6 bg-primary-600 flex items-center justify-center rounded-full ">
-                <User size={16} className="text-content-inverse" />
+              <div className="w-8 h-8 rounded-full bg-[var(--color-primary-600)] flex items-center justify-center text-white font-bold text-xs">
+                SM
               </div>
-              <div className="hidden text-left sm:flex-col sm:flex ">
-                <p className="text-xs font-medium leading-none text-content-primary">
+              <div className="hidden sm:block text-left">
+                <p className="text-xs font-bold text-[var(--color-content-primary)] leading-none">
                   Shohag Miah
                 </p>
-                <span className="text-[10px] text-content-muted">Admin</span>
+                <p className="text-[9px] font-bold uppercase tracking-tighter text-[var(--color-primary-600)] mt-0.5">
+                  Administrator
+                </p>
               </div>
             </button>
 
             {profileOpen && (
-              <div className="absolute right-0 mt-3 w-56 bg-surface-card border border-border-default rounded-xl shadow-lg py-2 z-50">
-                <div className="px-4 py-2 border-b border-border-default">
-                  <p className="text-sm font-medium text-content-primary">
-                    Shohag Miah
+              <div className="absolute right-0 mt-3 w-56 bg-[var(--color-surface-card)] border border-[var(--color-border-default)] rounded-2xl shadow-xl py-2 animate-in fade-in zoom-in-95 duration-200">
+                <div className="px-4 py-3 border-b border-[var(--color-border-default)]">
+                  <p className="text-xs font-bold">Signed in as</p>
+                  <p className="text-xs text-[var(--color-content-muted)] truncate">
+                    shohag.miah@lifeflow.com
                   </p>
-                  <p className="text-xs text-content-muted">Admin</p>
                 </div>
-
-                <button className="w-full text-left px-4 py-2 text-sm text-content-primary hover:bg-surface-tertiary transition">
-                  Profile
-                </button>
-                <button className="w-full text-left px-4 py-2 text-sm text-content-primary hover:bg-surface-tertiary transition">
-                  Settings
-                </button>
-                <button className="w-full text-left px-4 py-2 text-sm text-error-solid hover:bg-error-subtle transition">
-                  Logout
+                <Link
+                  to="/profile"
+                  className="flex items-center gap-3 px-4 py-2.5 text-xs hover:bg-[var(--color-surface-muted)] transition-colors"
+                >
+                  <User size={14} /> My Profile
+                </Link>
+                <Link
+                  to="/settings"
+                  className="flex items-center gap-3 px-4 py-2.5 text-xs hover:bg-[var(--color-surface-muted)] transition-colors"
+                >
+                  <Settings size={14} /> Console Settings
+                </Link>
+                <div className="h-px bg-[var(--color-border-default)] my-1" />
+                <button
+                  onClick={handleLogout}
+                  className="w-full flex items-center gap-3 px-4 py-2.5 text-xs text-red-500 hover:bg-red-50 transition-colors"
+                >
+                  <LogOut size={14} /> Sign Out
                 </button>
               </div>
             )}
           </div>
         </div>
       </header>
-
-      {/* Mobile Search Bar */}
-      {mobileSearchOpen && (
-        <div className="md:hidden sticky top-16 z-30 bg-surface-secondary border-b border-border-default p-4 animate-slide-down">
-          <div className="relative">
-            <Search
-              size={16}
-              className="absolute left-4 top-1/2 -translate-y-1/2 text-content-muted"
-            />
-            <input
-              id="mobile-search"
-              type="text"
-              placeholder="Search..."
-              autoFocus
-              className="w-full bg-surface-primary border border-border-default py-2.5 pl-12 pr-4 rounded-xl text-sm outline-none 
-              focus:border-primary-600 focus:ring-2 focus:ring-primary-200 
-              transition-all text-content-primary placeholder:text-content-muted"
-            />
-          </div>
-        </div>
-      )}
     </>
   );
 };

@@ -1,23 +1,51 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { Mail, Lock, LogIn, ArrowRight } from "lucide-react";
 import Input from "../../ui/Input";
 import Button from "../../ui/Button";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { useUserLoginMutation } from "../../redux/features/isAuth/authApi";
+import toast from "react-hot-toast";
+import { useDispatch } from "react-redux";
+import { setCredentials } from "../../redux/slices/authSlice";
 
 const LoginPage = () => {
+  const [loginUser, { data, isLoading, isSuccess, isError, error }] =
+    useUserLoginMutation();
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
+
   const {
     register,
     handleSubmit,
     formState: { errors, isSubmitting },
   } = useForm();
 
-  const onSubmit = async (data) => {
-    // Artificial delay for UX demonstration
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-    console.log("Login Data:", data);
-  };
+  const onSubmit = async (formData) => {
+    try {
+      // 1. Unwrap the promise to get the data directly or throw the error
+      const response = await loginUser(formData).unwrap();
 
+      // 2. Dispatch to Redux (assuming your backend returns { user: ... })
+      if (response?.user) {
+        dispatch(
+          setCredentials({
+            user: response.user,
+            token: response.token,
+          }),
+        );
+      }
+
+      // 3. UI Feedback & Navigation
+      navigate("/dashboard", { replace: true });
+    } catch (err) {
+      // 4. Handle errors from the backend response
+      const errMsg =
+        err?.data?.message || "Terminal Error: Invalid Credentials";
+      toast.error(errMsg);
+      console.error("Login Error:", err);
+    }
+  };
   return (
     <div className=" flex items-center justify-center bg-surface-main px-4 pt-10">
       <div className="w-full max-w-lg space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700 card shadow-[var(--shadow-xl)] border-border-strong p-8 md:p-10">
