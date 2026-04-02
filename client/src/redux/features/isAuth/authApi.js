@@ -4,11 +4,11 @@ export const authApi = createApi({
   reducerPath: "lifeFlow",
   baseQuery: fetchBaseQuery({
     baseUrl: "http://localhost:9000/api/auth",
-    credentials: "include", // ⚡️ Keep this for cookies
+    credentials: "include",
   }),
   tagTypes: ["User"],
   endpoints: (builder) => ({
-    userRegistration: builder.mutation({
+    registration: builder.mutation({
       query: (data) => ({
         url: "/register",
         method: "POST",
@@ -16,13 +16,12 @@ export const authApi = createApi({
       }),
     }),
 
-    userLogin: builder.mutation({
+    login: builder.mutation({
       query: (data) => ({
         url: "/login",
         method: "POST",
         body: data,
       }),
-      // Login should also invalidate old user data to prevent cache bleeding
       invalidatesTags: ["User"],
     }),
 
@@ -48,9 +47,9 @@ export const authApi = createApi({
 });
 
 export const {
-  useUserRegistrationMutation,
-  useUserLoginMutation,
-  useLogoutMutation, // Updated name
+  useRegistrationMutation,
+  useLoginMutation,
+  useLogoutMutation,
   useGetMeQuery,
   useGetAllUsersQuery,
 } = authApi;

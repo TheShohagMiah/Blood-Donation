@@ -1,4 +1,4 @@
-export const donationRequestData = [
+export const requests = [
   {
     id: "01",
     requester: "Shohag Miah",

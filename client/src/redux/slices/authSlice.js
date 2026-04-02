@@ -1,29 +1,29 @@
 import { createSlice } from "@reduxjs/toolkit";
 
 const initialState = {
-  // Initialize as null so "isAuthenticated: false" makes sense
+  isAuthenticated: false,
   user: null,
-  token: null,
+  access_token: null,
 };
 
+// authSlice.js - Updated reducer
 const authSlice = createSlice({
   name: "auth",
   initialState,
   reducers: {
-    // Corrected spelling to match industry standards
     setCredentials: (state, action) => {
-      console.log(action.payload);
-      state.user = action.payload;
-      state.token = true;
+      state.isAuthenticated = true;
+      state.user = action.payload; // ✅ Directly set the user
+      state.access_token = null; // Token is in httpOnly cookie, not needed here
     },
-    // Logout clears the state
+
     logout: (state) => {
+      state.isAuthenticated = false;
       state.user = null;
-      state.token = null;
+      state.access_token = null;
     },
   },
 });
 
-// ✅ Matches the reducer names exactly
 export const { setCredentials, logout } = authSlice.actions;
 export default authSlice.reducer;

@@ -1,8 +1,9 @@
 import React, { useEffect } from "react";
 import { NavLink, useLocation } from "react-router-dom";
-import { ChevronDown, X } from "lucide-react";
+import { ChevronDown, Droplet, LogOut, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { navLinks } from "../../data/navLinks";
+import { useSelector } from "react-redux";
 
 const Sidebar = ({
   isCollapsed,
@@ -17,6 +18,8 @@ const Sidebar = ({
   const toggleSubMenu = (i) => {
     setIsSubMenuOpen(isSubMenuOpen === i ? null : i);
   };
+
+  const { user } = useSelector((state) => state.auth);
 
   const filterNavLinks = navLinks.filter((l) => l.roles.includes(userRole));
 
@@ -60,14 +63,22 @@ const Sidebar = ({
           {/* Header */}
           <div className="flex items-center justify-between h-20 px-6 border-b border-[var(--color-border-default)]">
             <div className="flex items-center gap-3 overflow-hidden">
-              <div className="w-8 h-8 rounded bg-[var(--color-primary-600)] shrink-0 flex items-center justify-center text-white font-bold">
-                L
+              <div className="bg-[var(--color-primary-600)] p-2 rounded-xl group-hover:rotate-[15deg] transition-all duration-300 shadow-lg shadow-red-500/20">
+                <Droplet size={20} className="text-white fill-current" />
               </div>
               {!isCollapsed && (
-                <span className="text-sm font-bold tracking-tight text-[var(--color-content-primary)] whitespace-nowrap">
-                  Console{" "}
-                  <span className="text-[var(--color-primary-600)]">v1.0</span>
-                </span>
+                <div className="">
+                  <span className="text-xl font-black uppercase tracking-tighter text-[var(--color-content-primary)]">
+                    Life
+                    <span className="text-[var(--color-primary-600)]">
+                      Flow
+                    </span>
+                  </span>
+
+                  <p className="text-[8px] font-bold bg-primary-50 text-primary-600 px-4 py-1 rounded-lg border border-primary-600 w-fit capitalize">
+                    {user?.role}
+                  </p>
+                </div>
               )}
             </div>
 
@@ -157,15 +168,11 @@ const Sidebar = ({
 
           {/* Footer Info */}
           {!isCollapsed && (
-            <div className="p-6 border-t border-[var(--color-border-default)]">
-              <div className="bg-[var(--color-surface-muted)] p-4 rounded-xl">
-                <p className="text-[10px] font-bold uppercase tracking-widest text-[var(--color-content-muted)]">
-                  Active Role
-                </p>
-                <p className="text-xs font-bold text-[var(--color-content-primary)] mt-1">
-                  {userRole}
-                </p>
-              </div>
+            <div className=" border-t border-[var(--color-border-default)] p-5">
+              <button className="flex items-center gap-3 bg-red-50 px-4 py-2 rounded-sm font-bold text-sm border border-red-600 text-red-500 w-full">
+                <LogOut />
+                Sign Out
+              </button>
             </div>
           )}
         </div>

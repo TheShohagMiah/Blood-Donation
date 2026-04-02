@@ -13,18 +13,18 @@ import { districts } from "../../data/districts";
 import { upazilas } from "../../data/upazilas";
 import Button from "../../ui/Button";
 import { Link, useNavigate } from "react-router-dom";
-import { useUserRegistrationMutation } from "../../redux/features/isAuth/authApi";
+import { useRegistrationMutation } from "../../redux/features/isAuth/authApi";
 // Recommended for professional feedback
 
 const RegisterForm = () => {
   const navigate = useNavigate();
   // ⚡️ Fix 1: RTK Mutation Hook returns [trigger, result]
-  const [registerUser, { isLoading, isSuccess }] =
-    useUserRegistrationMutation();
+  const [registerUser, { isLoading, isSuccess }] = useRegistrationMutation();
 
   const {
     register,
     handleSubmit,
+    reset,
     formState: { errors },
     watch,
   } = useForm({
@@ -52,6 +52,7 @@ const RegisterForm = () => {
       // Remove confirmPassword before sending to server
       const { confirmPassword, ...submitData } = data;
       await registerUser(submitData).unwrap();
+      reset();
     } catch (err) {
       console.error(err?.data?.message || "Registration failed");
     }

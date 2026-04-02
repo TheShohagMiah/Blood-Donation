@@ -15,7 +15,7 @@ import {
 } from "lucide-react";
 import { useLogoutMutation } from "../../redux/features/isAuth/authApi";
 import { logout } from "../../redux/slices/authSlice";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 
 const Header = ({
   isCollapsed,
@@ -24,6 +24,7 @@ const Header = ({
   setIsMobileMenuOpen,
 }) => {
   const [userLogoutFromServer, { isLoading }] = useLogoutMutation();
+  const { user } = useSelector((state) => state.auth);
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
@@ -36,6 +37,17 @@ const Header = ({
   const notificationRef = useRef(null);
   const location = useLocation();
 
+  // generate abbrivation in words
+  const getAbbreviation = (name) => {
+    if (!name) return "S";
+    return name
+      .split(" ")
+      .map((word) => word[0])
+      .join("")
+      .toUpperCase();
+  };
+
+  const abbreviation = getAbbreviation(user?.name);
   // Generate Breadcrumbs from URL
   const pathnames = location.pathname.split("/").filter((x) => x);
 
@@ -179,14 +191,14 @@ const Header = ({
               className="flex items-center gap-3 pl-1 pr-3 py-1 rounded-full border border-[var(--color-border-default)] hover:border-[var(--color-primary-600)] transition-all bg-[var(--color-surface-muted)]/50"
             >
               <div className="w-8 h-8 rounded-full bg-[var(--color-primary-600)] flex items-center justify-center text-white font-bold text-xs">
-                SM
+                {abbreviation}
               </div>
               <div className="hidden sm:block text-left">
                 <p className="text-xs font-bold text-[var(--color-content-primary)] leading-none">
-                  Shohag Miah
+                  {user.name}
                 </p>
                 <p className="text-[9px] font-bold uppercase tracking-tighter text-[var(--color-primary-600)] mt-0.5">
-                  Administrator
+                  {user?.role}
                 </p>
               </div>
             </button>
@@ -196,7 +208,7 @@ const Header = ({
                 <div className="px-4 py-3 border-b border-[var(--color-border-default)]">
                   <p className="text-xs font-bold">Signed in as</p>
                   <p className="text-xs text-[var(--color-content-muted)] truncate">
-                    shohag.miah@lifeflow.com
+                    {user?.email}
                   </p>
                 </div>
                 <Link

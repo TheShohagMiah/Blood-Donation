@@ -1,47 +1,46 @@
 import React, { useEffect } from "react";
 import { Route, Routes, Navigate } from "react-router-dom";
-import { useDispatch, useSelector } from "react-redux";
-import { useGetMeQuery } from "./redux/features/isAuth/authApi";
-import { setCredentials } from "./redux/slices/authSlice";
 import { Toaster } from "react-hot-toast";
-// Layouts & Guards
+
 import MainLayout from "./layouts/MainLayout";
 import AdminLayout from "./layouts/AdminLayout";
-import ProtectedRoute from "./components/ProtectedRoute";
 import Home from "./pages/client/Home";
 import BloodRequests from "./pages/client/Request";
 import FindDonors from "./pages/client/FindDonors";
-
-// Dashboard Pages
+import LoginPage from "./components/client/Login";
+import RegisterForm from "./components/client/Register";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import DonarDashboard from "./pages/donor/DonarDashboard";
 import VolunteerDashboard from "./pages/volunteer/VolunteerDashboard";
 import AllUsers from "./pages/admin/AllUsers";
 import AllDonationRequests from "./pages/admin/AllDonationRequests";
 import Profile from "./pages/shared/Profile";
-import LoginPage from "./components/client/Login";
-import RegisterForm from "./components/client/Register";
 import Unauthorized from "./pages/shared/Unauthorized";
+import { useGetMeQuery } from "./redux/features/isAuth/authApi";
+import { useDispatch, useSelector } from "react-redux";
+import { setCredentials } from "./redux/slices/authSlice";
 import Loader from "./ui/Loader";
+import PublicRoute from "./components/PublicRoute";
+import { ProtectedRoute } from "./components/ProtectedRoute";
 
 const App = () => {
   const dispatch = useDispatch();
-  const { user, token } = useSelector((state) => state.auth);
+  const { user, isAuthenticated } = useSelector((state) => state.auth);
+  // 1. Run the query. isFetching is true on every refresh.
   const { data, isLoading, isFetching } = useGetMeQuery();
 
   useEffect(() => {
     if (data?.user) {
-      dispatch(setCredentials(data?.user));
+      dispatch(setCredentials(data.user));
     }
   }, [data, dispatch]);
 
+  // until we have an answer from the server.
   if (isLoading || isFetching) {
     return <Loader />;
   }
-
   return (
     <>
-      {/* ✅ 1. Toaster lives OUTSIDE of Routes */}
       <Toaster
         position="top-center"
         reverseOrder={false}
@@ -73,46 +72,86 @@ const App = () => {
         }}
       />
 
-      {/* ✅ 2. Routes only contain Route components */}
       <Routes>
-        {/* PUBLIC ZONE */}
+        {/* Public Application Routes */}
         <Route path="/" element={<MainLayout />}>
           <Route index element={<Home />} />
           <Route path="requests" element={<BloodRequests />} />
           <Route path="find-donors" element={<FindDonors />} />
-          <Route path="login" element={<LoginPage />} />
-          <Route path="register" element={<RegisterForm />} />
+
+          <Route
+            path="login"
+            element={
+              <PublicRoute>
+                <LoginPage />
+              </PublicRoute>
+            }
+          />
+          <Route
+            path="register"
+            element={
+              <PublicRoute>
+                <RegisterForm />
+              </PublicRoute>
+            }
+          />
         </Route>
 
-        {/* PROTECTED ZONE */}
+        {/* Protected Dashboard Routes */}
         <Route
           path="/dashboard"
           element={
-            <ProtectedRoute allowedRoles={["admin", "donor", "volunteer"]} />
+            <ProtectedRoute allowedRoles={["admin", "donor", "volunteer"]}>
+              <AdminLayout />
+            </ProtectedRoute>
           }
         >
-          <Route element={<AdminLayout userRole={user?.role} />}>
-            <Route
-              index
-              element={
-                user?.role === "admin" ? (
-                  <AdminDashboard />
-                ) : user?.role === "donor" ? (
-                  <DonarDashboard />
-                ) : (
-                  <VolunteerDashboard />
-                )
-              }
-            />
-            <Route element={<ProtectedRoute allowedRoles={["admin"]} />}>
-              <Route path="users" element={<AllUsers />} />
-              <Route
-                path="donation-requests"
-                element={<AllDonationRequests />}
-              />
-            </Route>
-            <Route path="profile" element={<Profile />} />
-          </Route>
+          {/* Admin Specific */}
+          <Route
+            index
+            element={
+              <ProtectedRoute allowedRoles={["admin"]}>
+                <AdminDashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="users"
+            element={
+              <ProtectedRoute allowedRoles={["admin"]}>
+                <AllUsers />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Role Specific Dashboards */}
+          <Route
+            path="donor"
+            element={
+              <ProtectedRoute allowedRoles={["donor"]}>
+                <DonarDashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="volunteer"
+            element={
+              <ProtectedRoute allowedRoles={["volunteer"]}>
+                <VolunteerDashboard />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Shared Protected Routes */}
+          <Route path="donation-requests" element={<AllDonationRequests />} />
+          <Route
+            path="profile"
+            element={
+              <ProtectedRoute allowedRoles={["admin", "donor", "volunteer"]}>
+                <Profile />
+              </ProtectedRoute>
+            }
+          />
         </Route>
 
         <Route path="/unauthorized" element={<Unauthorized />} />

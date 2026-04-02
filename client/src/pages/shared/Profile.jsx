@@ -10,20 +10,11 @@ import {
   History,
 } from "lucide-react";
 import Button from "../../ui/Button";
+import { useSelector } from "react-redux";
 
 const Profile = () => {
+  const { user } = useSelector((state) => state.auth);
   // Mock User Data - Replace with your Auth Context data
-  const user = {
-    name: "Tanvir Ahmed",
-    email: "tanvir.dev@example.com",
-    role: "Donor",
-    bloodGroup: "O+",
-    district: "Dhaka",
-    area: "Dhanmondi",
-    lastDonation: "2025-12-15",
-    totalDonations: 4,
-    status: "Verified",
-  };
 
   return (
     <div className="max-w-5xl mx-auto space-y-8 animate-in fade-in duration-500">

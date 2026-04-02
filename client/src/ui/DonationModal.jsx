@@ -39,7 +39,7 @@ const DonationModal = ({ isOpen, onClose, onSubmit, selectedRequest }) => {
               Donate Now
             </h3>
             <p className="text-[13px] text-[var(--color-content-muted)] mt-1">
-              Providing blood for {selectedRequest?.patient}
+              Providing blood for {selectedRequest?.recipient}
             </p>
           </div>
           <button

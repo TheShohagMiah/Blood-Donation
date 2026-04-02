@@ -4,40 +4,12 @@ import { districts } from "../../data/districts";
 import Select from "../../ui/Select";
 import Button from "../../ui/Button";
 import DonationModal from "../../ui/DonationModal";
-
-const requests = [
-  {
-    id: 1,
-    patient: "Abdur Rahman",
-    bloodGroup: "A+",
-    district: "Dhaka",
-    hospital: "DMCH",
-    date: "2026-03-28",
-    urgency: "Emergency",
-  },
-  {
-    id: 2,
-    patient: "Sultana Kamal",
-    bloodGroup: "O-",
-    district: "Chattogram",
-    hospital: "Apollo",
-    date: "2026-03-30",
-    urgency: "Normal",
-  },
-  {
-    id: 3,
-    patient: "Karim Uddin",
-    bloodGroup: "B+",
-    district: "Sylhet",
-    hospital: "Osmani Medical",
-    date: "2026-03-27",
-    urgency: "Critical",
-  },
-];
-
-const bloodGroups = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"];
+import { bloodGroups } from "../../data/bloodGroups";
+import RequestViewModal from "../../ui/RequestViewModal";
+import { donationRequestData } from "../../data/donationRequest";
 
 const BloodRequests = () => {
+  const [viewRequest, setViewRequest] = useState(null);
   const [selectedRequest, setSelectedRequest] = useState(null);
   const [tempFilter, setTempFilter] = useState({
     bloodGroup: "",
@@ -53,7 +25,7 @@ const BloodRequests = () => {
   }, []);
 
   const filterRequests = useMemo(() => {
-    return requests.filter((request) => {
+    return donationRequestData.filter((request) => {
       const matchBloodGroup = activeFilter.bloodGroup
         ? request.bloodGroup === activeFilter.bloodGroup
         : true;
@@ -135,7 +107,7 @@ const BloodRequests = () => {
                   <div className="space-y-1">
                     <div className="flex items-center gap-3">
                       <h3 className="font-bold text-lg text-[var(--color-content-primary)]">
-                        {req.patient}
+                        {req.recipient}
                       </h3>
                       <span
                         className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded border ${
@@ -160,6 +132,7 @@ const BloodRequests = () => {
                 </div>
                 <div className="flex items-center gap-3">
                   <Button
+                    onClick={() => setViewRequest(req)}
                     variant="secondary"
                     className="h-10 px-6 hidden sm:flex"
                   >
@@ -183,6 +156,12 @@ const BloodRequests = () => {
         </div>
       </div>
 
+      {
+        <RequestViewModal
+          onClose={() => setViewRequest(null)}
+          data={viewRequest}
+        />
+      }
       <DonationModal
         isOpen={!!selectedRequest}
         selectedRequest={selectedRequest}
