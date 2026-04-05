@@ -80,7 +80,7 @@ export const getOwnRequest = async (req, res, next) => {
     res.status(200).json({
       success: true,
       count: total,
-      requests,
+      data: requests,
     });
   } catch (error) {
     next(error);

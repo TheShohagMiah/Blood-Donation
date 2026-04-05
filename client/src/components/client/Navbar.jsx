@@ -80,8 +80,8 @@ const Navbar = () => {
             <div className="flex gap-2">
               <Link to="/login">
                 <Button
-                  variant="ghost"
-                  className="h-10 px-5 text-[10px] font-black uppercase tracking-widest"
+                  variant="secondary"
+                  className="h-8 px-4 text-[10px] font-black uppercase tracking-widest"
                 >
                   <LogIn size={14} className="mr-2" /> Sign In
                 </Button>
@@ -89,7 +89,7 @@ const Navbar = () => {
               <Link to="/register">
                 <Button
                   variant="primary"
-                  className="h-10 px-6 text-[10px] font-black uppercase tracking-widest"
+                  className="h-8 px-2 text-[10px] font-black uppercase tracking-widest"
                 >
                   Join Now
                 </Button>

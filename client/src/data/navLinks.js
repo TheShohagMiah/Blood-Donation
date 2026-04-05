@@ -27,9 +27,9 @@ export const navLinks = [
         icon: Users,
       },
       {
-        name: "Access Control",
-        path: "/dashboard/users/roles",
-        icon: ShieldCheck,
+        name: "Add User",
+        path: "/dashboard/users/add",
+        icon: UserPlus,
       },
     ],
   },

@@ -20,7 +20,7 @@ app.get("/", (req, res) => {
 });
 
 app.use("/api/auth", authRoutes);
-app.use("/api/donation-requests", requestRoutes);
+app.use("/api/requests", requestRoutes);
 // --- 404 Handler ---
 app.use((req, res, next) => {
   const error = new Error(`Not Found - ${req.originalUrl}`);

@@ -54,7 +54,7 @@
   --color-surface-primary:   #ffffff;
   --color-surface-secondary: #f8fafc;
   --color-surface-tertiary:  #f1f5f9;
-  --color-surface-card:      #ffffff;
+  --color-surface-card: #F6F8FA;
   --color-surface-overlay:   rgba(0, 0, 0, 0.5);
 
   /* === Semantic Text Colors (Light Mode Default) === */
@@ -65,7 +65,7 @@
   --color-content-link:      #2563eb;
 
   /* === Semantic Border Colors === */
-  --color-border-default: #e2e8f0;
+  --color-border-default: #d1d9e0;
   --color-border-strong:  #cbd5e1;
   --color-border-focus:   #3b82f6;
 
@@ -137,10 +137,10 @@
    Brand/Primary color অপরিবর্তিত থাকবে।
 ───────────────────────────────────────── */
 .dark {
-  --color-surface-primary:   #0f172a;
-  --color-surface-secondary: #1e293b;
+  --color-surface-primary:   #0F0E0E;
+  --color-surface-secondary: #393E46;
   --color-surface-tertiary:  #334155;
-  --color-surface-card:      #1e293b;
+  --color-surface-card:      #191919;
   --color-surface-overlay:   rgba(0, 0, 0, 0.75);
 
   --color-content-primary:   #f8fafc;
@@ -149,7 +149,7 @@
   --color-content-inverse:   #0f172a;
   --color-content-link:      #60a5fa;
 
-  --color-border-default: #334155;
+  --color-border-default: #262425;
   --color-border-strong:  #475569;
   --color-border-focus:   #60a5fa;
 

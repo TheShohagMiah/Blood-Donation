@@ -1,0 +1,69 @@
+import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
+
+export const bloodRequestApi = createApi({
+  reducerPath: "bloodRequestApi",
+  baseQuery: fetchBaseQuery({
+    baseUrl: "http://localhost:9000/api/requests",
+    prepareHeaders: (headers, { getState }) => {
+      // Access auth token if available, but allow guest requests
+      const token = getState().auth?.token;
+      if (token) {
+        headers.set("Authorization", `Bearer ${token}`);
+      }
+      return headers;
+    },
+  }),
+  // Fixed property name: tagTypes (lowercase 't')
+  tagTypes: ["BloodRequests"],
+
+  endpoints: (builder) => ({
+    getBloodRequests: builder.query({
+      query: () => "/",
+    }),
+
+    // Public Creation with Protection
+    createBloodRequest: builder.mutation({
+      query: (requestData) => {
+        // Honeypot Check: If the hidden 'website' field is filled, it's a bot.
+        // You should add an invisible input named 'website' in your CreateBloodRequest form.
+        if (requestData.website) {
+          throw new Error("Bot detected");
+        }
+
+        return {
+          url: "/",
+          method: "POST",
+          body: requestData,
+        };
+      },
+      invalidatesTags: [{ type: "BloodRequests", id: "LIST" }],
+    }),
+
+    updateBloodRequest: builder.mutation({
+      query: ({ id, ...requestData }) => ({
+        url: `/${id}`,
+        method: "PUT",
+        body: requestData,
+      }),
+      invalidatesTags: (result, error, { id }) => [
+        { type: "BloodRequests", id },
+        { type: "BloodRequests", id: "LIST" },
+      ],
+    }),
+
+    deleteBloodRequest: builder.mutation({
+      query: (id) => ({
+        url: `/${id}`,
+        method: "DELETE",
+      }),
+      invalidatesTags: [{ type: "BloodRequests", id: "LIST" }],
+    }),
+  }),
+});
+
+export const {
+  useGetBloodRequestsQuery,
+  useCreateBloodRequestMutation,
+  useUpdateBloodRequestMutation,
+  useDeleteBloodRequestMutation,
+} = bloodRequestApi;

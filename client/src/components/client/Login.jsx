@@ -24,10 +24,7 @@ const LoginPage = () => {
   const onSubmit = async (formData) => {
     try {
       const response = await loginUser(formData).unwrap();
-      console.log(response);
-
       dispatch(setCredentials(response?.user));
-
       navigate("/dashboard", { replace: true });
     } catch (err) {
       const errMsg =
@@ -91,27 +88,23 @@ const LoginPage = () => {
           <Button
             type="submit"
             variant="primary"
-            className="w-full h-12"
+            className="w-full"
             isLoading={isSubmitting}
           >
             <span className="flex items-center justify-center gap-2">
-              Sign In <LogIn size={18} />
+              Sign In
             </span>
           </Button>
         </form>
 
         {/* Footer Link */}
-        <p className="text-center text-sm text-[var(--color-content-muted)]">
-          Don&apos;t have an account?{" "}
+        <p className="text-center text-[10px] font-bold uppercase tracking-widest text-[var(--color-content-muted)] mt-8">
+          Don't have an account?{" "}
           <Link
             to="/register"
-            className="font-bold text-[var(--color-content-primary)] hover:underline inline-flex items-center gap-1 group"
+            className="text-[var(--color-content-primary)] hover:text-[var(--color-primary-600)] transition-colors inline-flex items-center gap-2"
           >
-            Create account
-            <ArrowRight
-              size={14}
-              className="group-hover:translate-x-1 transition-transform"
-            />
+            create an account <ArrowRight size={12} />
           </Link>
         </p>
       </div>

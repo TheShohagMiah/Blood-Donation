@@ -42,10 +42,15 @@ const requestSchema = new mongoose.Schema(
       type: String,
       required: [true, "Donation time is required"],
     },
-    description: {
+    message: {
       type: String,
       required: [true, "Please explain why the blood is needed"],
-      maxlength: [500, "Description cannot exceed 500 characters"],
+      maxlength: [500, "Message cannot exceed 500 characters"],
+    },
+    urgency: {
+      type: String,
+      required: true,
+      enum: ["normal", "urgent", "emergency"],
     },
     contactNumber: {
       type: Number,

@@ -16,7 +16,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { useRegistrationMutation } from "../../redux/features/isAuth/authApi";
 // Recommended for professional feedback
 
-const RegisterForm = () => {
+const AddUser = () => {
   const navigate = useNavigate();
   // ⚡️ Fix 1: RTK Mutation Hook returns [trigger, result]
   const [registerUser, { isLoading, isSuccess }] = useRegistrationMutation();
@@ -63,10 +63,10 @@ const RegisterForm = () => {
       <div className="bg-[var(--color-surface-card)] shadow-2xl border border-[var(--color-border-default)] rounded-[2.5rem] p-8 md:p-12">
         <header className="mb-10 text-center">
           <h2 className="text-3xl font-black uppercase tracking-tighter text-[var(--color-content-primary)]">
-            Create Account
+            Add User
           </h2>
           <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[var(--color-primary-600)] mt-2">
-            Secure Terminal Onboarding
+            Create new donor or volunteer account
           </p>
         </header>
 
@@ -107,7 +107,7 @@ const RegisterForm = () => {
             </Select>
 
             <Select
-              label="System Role"
+              label="Role"
               error={errors.role?.message}
               {...register("role", { required: "Role is required" })}
             >
@@ -174,22 +174,12 @@ const RegisterForm = () => {
             className="w-full py-4 text-[11px] font-black uppercase tracking-[0.3em] shadow-xl shadow-red-500/10"
             isLoading={isLoading}
           >
-            Register
+            Add User
           </Button>
         </form>
-
-        <p className="text-center text-[10px] font-bold uppercase tracking-widest text-[var(--color-content-muted)] mt-8">
-          Already Enlisted?{" "}
-          <Link
-            to="/login"
-            className="text-[var(--color-content-primary)] hover:text-[var(--color-primary-600)] transition-colors inline-flex items-center gap-2"
-          >
-            Sign in <ArrowRight size={12} />
-          </Link>
-        </p>
       </div>
     </div>
   );
 };
 
-export default RegisterForm;
+export default AddUser;

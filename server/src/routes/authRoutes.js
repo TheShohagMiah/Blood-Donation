@@ -1,5 +1,6 @@
 import { Router } from "express";
 import {
+  deleteUser,
   getAllUsers,
   getDonors,
   getMe,
@@ -36,4 +37,11 @@ authRoutes.patch(
   authorizeRoles("admin"),
   updateUserRole,
 );
+authRoutes.delete(
+  "/users/:id",
+  isAuthenticated,
+  authorizeRoles("admin"),
+  deleteUser,
+);
+
 export default authRoutes;

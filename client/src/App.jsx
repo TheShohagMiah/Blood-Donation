@@ -22,6 +22,7 @@ import { setCredentials } from "./redux/slices/authSlice";
 import Loader from "./ui/Loader";
 import PublicRoute from "./components/PublicRoute";
 import { ProtectedRoute } from "./components/ProtectedRoute";
+import AddUser from "./pages/admin/AddUser";
 
 const App = () => {
   const dispatch = useDispatch();
@@ -123,7 +124,14 @@ const App = () => {
               </ProtectedRoute>
             }
           />
-
+          <Route
+            path="users/add"
+            element={
+              <ProtectedRoute allowedRoles={["admin"]}>
+                <AddUser />
+              </ProtectedRoute>
+            }
+          />
           {/* Role Specific Dashboards */}
           <Route
             path="donor"

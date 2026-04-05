@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import Button from "../../../../ui/Button";
 import {
   ArrowRight,
@@ -8,8 +8,13 @@ import {
   ShieldCheck,
   MapPin,
 } from "lucide-react";
+import CreateBloodRequest from "./CreateBloodRequest";
+import { useNavigate } from "react-router-dom";
 
 const Hero = () => {
+  const navigate = useNavigate();
+  const [createBloodRequest, setCreateBloodRequest] = useState(false);
+
   return (
     <section className="relative min-h-[90vh] lg:min-h-[95vh] flex items-center overflow-hidden bg-surface-primary transition-colors duration-base ease-smooth pt-20 lg:pt-0">
       {/* Decorative Background - Hidden on small screens for clarity */}
@@ -39,14 +44,18 @@ const Hero = () => {
           </div>
 
           <div className="flex flex-col sm:flex-row items-center gap-4 w-full sm:w-auto pt-2">
-            <Button className="btn-lg btn-primary w-full sm:w-auto shadow-lg shadow-primary-500/20 hover:scale-[1.02] transition-transform">
-              Find a Donor <ArrowRight className="ml-2" size={20} />
+            <Button
+              onClick={() => setCreateBloodRequest(true)}
+              className="btn-lg btn-primary w-full sm:w-auto shadow-lg shadow-primary-500/20 hover:scale-[1.02] transition-transform"
+            >
+              Need Blood <ArrowRight className="ml-2" size={20} />
             </Button>
             <Button
+              onClick={() => navigate("/find-donors")}
               variant="secondary"
               className="btn-lg btn-secondary w-full sm:w-auto"
             >
-              How it Works
+              Find a donor
             </Button>
           </div>
 
@@ -138,6 +147,10 @@ const Hero = () => {
           </div>
         </div>
       </div>
+
+      {createBloodRequest && (
+        <CreateBloodRequest onClose={() => setCreateBloodRequest(false)} />
+      )}
     </section>
   );
 };

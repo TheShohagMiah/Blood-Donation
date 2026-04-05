@@ -3,7 +3,8 @@ import User from "../models/user.js";
 
 // --- Registration ---
 export const registration = async (req, res, next) => {
-  const { name, email, password, district, upazila, bloodGroup } = req.body;
+  const { name, email, password, district, upazila, role, bloodGroup } =
+    req.body;
 
   const existingUser = await User.findOne({ email });
   if (existingUser) {
@@ -20,19 +21,19 @@ export const registration = async (req, res, next) => {
     district,
     upazila,
     bloodGroup,
+    role,
   });
 
   res.status(201).json({
     success: true,
     message: "Account has been created successfully.",
-    user: { id: user._id, name: user.name, email: user.email },
+    user: { id: user._id, name: user.name, email: user.email, role: user.role },
   });
 };
 
 // --- Login ---
 export const login = async (req, res, next) => {
   const { email, password } = req.body;
-
   const user = await User.findOne({ email }).select("+password");
 
   if (!user || !(await user.comparePassword(password))) {
@@ -225,16 +226,27 @@ export const updateUserRole = async (req, res, next) => {
 
 export const updateUserStatus = async (req, res, next) => {
   try {
-    const id = req.params.id;
+    const { id } = req.params;
     const { status } = req.body;
 
+    // 1. Validate Input
     const allowedStatuses = ["active", "blocked"];
     if (!allowedStatuses.includes(status)) {
-      const error = new Error("Invalid status value.");
+      const error = new Error(
+        `Invalid status. Must be one of: ${allowedStatuses.join(", ")}`,
+      );
       error.statusCode = 400;
       return next(error);
     }
 
+    // 2. Authorization Check (Keep this at the top to save DB hits)
+    if (req.user.role !== "admin") {
+      const error = new Error("Only admins can update user status.");
+      error.statusCode = 403;
+      return next(error);
+    }
+
+    // 3. Find User
     const user = await User.findById(id);
     if (!user) {
       const error = new Error("User no longer exists.");
@@ -242,31 +254,53 @@ export const updateUserStatus = async (req, res, next) => {
       return next(error);
     }
 
-    const isAdmin = req.user.role === "admin";
-    if (!isAdmin) {
-      const error = new Error("Only admin can update users status.");
-      error.statusCode = 403;
-      return next(error);
-    }
-
-    // Check if status is already set to the requested value
+    // 4. Check for Redundant Updates
     if (user.status === status) {
       const error = new Error(`User status is already ${status}`);
       error.statusCode = 400;
       return next(error);
     }
 
+    // 5. Update and Save
     user.status = status;
     await user.save();
 
     res.status(200).json({
       success: true,
-      message: "Status has been updated successfully.",
+      message: `User is now ${status}.`,
       user: {
-        id: user._id,
+        _id: user._id, // Keep underscore to match your frontend map logic
         name: user.name,
         status: user.status,
       },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const deleteUser = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+
+    if (req.user.role !== "admin") {
+      const error = new Error("Only admins can delete users.");
+      error.statusCode = 403;
+      return next(error);
+    }
+
+    const user = await User.findById(id);
+    if (!user) {
+      const error = new Error("User not found.");
+      error.statusCode = 404;
+      return next(error);
+    }
+
+    await user.deleteOne();
+
+    res.status(200).json({
+      success: true,
+      message: "User has been deleted successfully.",
     });
   } catch (error) {
     next(error);

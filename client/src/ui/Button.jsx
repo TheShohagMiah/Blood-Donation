@@ -13,7 +13,7 @@ const Button = ({
 }) => {
   // Base styles following your design language
   const baseStyles =
-    "relative inline-flex items-center justify-center rounded-[var(--radius-lg)] transition-all duration-200 active:scale-[0.98] disabled:opacity-50 disabled:pointer-events-none font-bold uppercase tracking-[0.08em] text-[11px]";
+    "relative inline-flex items-center justify-center rounded-[var(--radius-md)] transition-all duration-200 active:scale-[0.98] disabled:opacity-50 disabled:pointer-events-none font-bold uppercase tracking-[0.08em] text-[11px]";
 
   const variants = {
     primary:
@@ -30,7 +30,7 @@ const Button = ({
       type={type}
       onClick={onClick}
       disabled={disabled || isLoading}
-      className={`${baseStyles} ${variants[variant]} ${className} px-6 h-11`}
+      className={`${baseStyles} ${variants[variant]} ${className} px-5 h-10`}
     >
       {isLoading ? (
         <Loader2 className="w-4 h-4 animate-spin" />

@@ -14,6 +14,7 @@ export const authApi = createApi({
         method: "POST",
         body: data,
       }),
+      invalidatesTags: ["User"],
     }),
 
     login: builder.mutation({
@@ -43,6 +44,30 @@ export const authApi = createApi({
       query: () => "/users",
       providesTags: ["User"],
     }),
+
+    updateStatus: builder.mutation({
+      // Use an object to pass multiple values
+      query: ({ id, status }) => ({
+        url: `/users/status/${id}`,
+        method: "PATCH",
+        // Ensure the key matches 'status' to match your backend 'const { status } = req.body'
+        body: { status },
+      }),
+    }),
+
+    updateRole: builder.mutation({
+      query: ({ id, role }) => ({
+        url: `/users/role/${id}`,
+        method: "PATCH",
+        body: { role },
+      }),
+    }),
+    deleteUser: builder.mutation({
+      query: (id) => ({
+        url: `/users/${id}`,
+        method: "DELETE",
+      }),
+    }),
   }),
 });
 
@@ -52,4 +77,7 @@ export const {
   useLogoutMutation,
   useGetMeQuery,
   useGetAllUsersQuery,
+  useUpdateStatusMutation,
+  useUpdateRoleMutation,
+  useDeleteUserMutation,
 } = authApi;
