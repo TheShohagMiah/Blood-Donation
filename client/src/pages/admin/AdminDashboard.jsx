@@ -9,8 +9,23 @@ import {
   Clock,
 } from "lucide-react";
 import StatsCard from "../../ui/StatsCard";
+import { useSelector } from "react-redux";
+import { useGetStatsQuery } from "../../redux/features/isAuth/authApi";
 
 const AdminDashboard = () => {
+  const { user } = useSelector((state) => state.auth);
+  const { data: stats, isLoading } = useGetStatsQuery();
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <p className="text-lg font-medium text-[var(--color-content-muted)]">
+          Loading dashboard...
+        </p>
+      </div>
+    );
+  }
+
   // Mock data for the "Industrial" look
   const recentRequests = [
     {
@@ -42,7 +57,8 @@ const AdminDashboard = () => {
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
             <h1 className="text-3xl font-bold tracking-tight text-[var(--color-content-primary)]">
-              Console Overview
+              Welcome Back, {user?.name || "Admin"}{" "}
+              <span className="wave">👋</span>
             </h1>
             <p className="text-[var(--color-content-muted)] mt-1 text-sm">
               Operational metrics for{" "}
@@ -60,11 +76,19 @@ const AdminDashboard = () => {
 
       {/* Primary Metrics */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-10">
-        <StatsCard label="Total Users" value="1,240" icon={Users} />
-        <StatsCard label="Donation Requests" value="84" icon={ClipboardList} />
+        <StatsCard
+          label="Total Users"
+          value={stats?.data.totalUsers}
+          icon={Users}
+        />
+        <StatsCard
+          label="Donation Requests"
+          value={stats?.data.totalRequests}
+          icon={ClipboardList}
+        />
         <StatsCard
           label="Total Funding"
-          value="$12,450"
+          value={stats?.data.totalFunding}
           icon={CircleDollarSign}
         />
       </div>

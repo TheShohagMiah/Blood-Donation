@@ -25,7 +25,7 @@ const LoginPage = () => {
     try {
       const response = await loginUser(formData).unwrap();
       dispatch(setCredentials(response?.user));
-      navigate("/dashboard", { replace: true });
+      // navigate("/dashboard", { replace: true });
     } catch (err) {
       const errMsg =
         err?.data?.message || "Terminal Error: Invalid Credentials";

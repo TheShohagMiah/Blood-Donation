@@ -1,33 +1,43 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useMemo } from "react";
 import { Route, Routes, Navigate } from "react-router-dom";
 import { Toaster } from "react-hot-toast";
+import { useDispatch, useSelector } from "react-redux";
 
+// Layouts & UI
 import MainLayout from "./layouts/MainLayout";
 import AdminLayout from "./layouts/AdminLayout";
+import Loader from "./ui/Loader";
+
+// Public Pages
 import Home from "./pages/client/Home";
 import BloodRequests from "./pages/client/Request";
-import FindDonors from "./pages/client/FindDonors";
+import FindDonors from "./pages/client/FindDonors"; // This is your Search Page
 import LoginPage from "./components/client/Login";
 import RegisterForm from "./components/client/Register";
+
+// Dashboard Pages
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import DonarDashboard from "./pages/donor/DonarDashboard";
 import VolunteerDashboard from "./pages/volunteer/VolunteerDashboard";
 import AllUsers from "./pages/admin/AllUsers";
 import AllDonationRequests from "./pages/admin/AllDonationRequests";
+import AddUser from "./pages/admin/AddUser";
+
+// Shared Pages
 import Profile from "./pages/shared/Profile";
 import Unauthorized from "./pages/shared/Unauthorized";
+
+// Logic & State
 import { useGetMeQuery } from "./redux/features/isAuth/authApi";
-import { useDispatch, useSelector } from "react-redux";
 import { setCredentials } from "./redux/slices/authSlice";
-import Loader from "./ui/Loader";
 import PublicRoute from "./components/PublicRoute";
 import { ProtectedRoute } from "./components/ProtectedRoute";
-import AddUser from "./pages/admin/AddUser";
+import DonorSearchPage from "./pages/client/Search";
 
 const App = () => {
   const dispatch = useDispatch();
-  const { user, isAuthenticated } = useSelector((state) => state.auth);
-  // 1. Run the query. isFetching is true on every refresh.
+  const { user } = useSelector((state) => state.auth);
+
   const { data, isLoading, isFetching } = useGetMeQuery();
 
   useEffect(() => {
@@ -36,10 +46,22 @@ const App = () => {
     }
   }, [data, dispatch]);
 
-  // until we have an answer from the server.
-  if (isLoading || isFetching) {
-    return <Loader />;
-  }
+  const DynamicDashboard = useMemo(() => {
+    if (!user) return null;
+    switch (user.role) {
+      case "admin":
+        return <AdminDashboard />;
+      case "donor":
+        return <DonarDashboard />;
+      case "volunteer":
+        return <VolunteerDashboard />;
+      default:
+        return <Navigate to="/unauthorized" replace />;
+    }
+  }, [user?.role]);
+
+  if (isLoading || isFetching) return <Loader />;
+
   return (
     <>
       <Toaster
@@ -48,24 +70,28 @@ const App = () => {
         gutter={8}
         toastOptions={{
           className:
-            "border border-[var(--color-border-default)] font-medium uppercase tracking-[0.20em] text-[10px]",
+            "border border-[var(--color-border-default)] font-medium uppercase tracking-[0.25em] text-[10px]",
+
           duration: 4000,
+
           style: {
             background: "var(--color-surface-card)",
             color: "var(--color-content-primary)",
             backdropFilter: "blur(8px)",
             padding: "12px 24px",
-            borderRadius: "12px",
+            borderRadius: "6px",
             boxShadow:
               "0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)",
           },
+
           success: {
             iconTheme: {
-              primary: "var(--color-primary-600)",
+              primary: "#2DCF73",
               secondary: "white",
             },
-            style: { borderLeft: "4px solid var(--color-primary-600)" },
+            style: { borderLeft: "4px solid #2DCF73" },
           },
+
           error: {
             iconTheme: { primary: "#ef4444", secondary: "white" },
             style: { borderLeft: "4px solid #ef4444" },
@@ -74,12 +100,17 @@ const App = () => {
       />
 
       <Routes>
-        {/* Public Application Routes */}
+        {/* --- PUBLIC SECTION --- */}
         <Route path="/" element={<MainLayout />}>
           <Route index element={<Home />} />
           <Route path="requests" element={<BloodRequests />} />
+
+          {/* SEARCH PAGE ROUTE */}
+          <Route path="search" element={<DonorSearchPage />} />
+
           <Route path="find-donors" element={<FindDonors />} />
 
+          {/* Auth Routes */}
           <Route
             path="login"
             element={
@@ -98,7 +129,7 @@ const App = () => {
           />
         </Route>
 
-        {/* Protected Dashboard Routes */}
+        {/* --- DASHBOARD SECTION --- */}
         <Route
           path="/dashboard"
           element={
@@ -107,59 +138,16 @@ const App = () => {
             </ProtectedRoute>
           }
         >
-          {/* Admin Specific */}
-          <Route
-            index
-            element={
-              <ProtectedRoute allowedRoles={["admin"]}>
-                <AdminDashboard />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="users"
-            element={
-              <ProtectedRoute allowedRoles={["admin"]}>
-                <AllUsers />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="users/add"
-            element={
-              <ProtectedRoute allowedRoles={["admin"]}>
-                <AddUser />
-              </ProtectedRoute>
-            }
-          />
-          {/* Role Specific Dashboards */}
-          <Route
-            path="donor"
-            element={
-              <ProtectedRoute allowedRoles={["donor"]}>
-                <DonarDashboard />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="volunteer"
-            element={
-              <ProtectedRoute allowedRoles={["volunteer"]}>
-                <VolunteerDashboard />
-              </ProtectedRoute>
-            }
-          />
+          <Route index element={DynamicDashboard} />
 
-          {/* Shared Protected Routes */}
+          {/* Admin Routes */}
+          <Route element={<ProtectedRoute allowedRoles={["admin"]} />}>
+            <Route path="users" element={<AllUsers />} />
+            <Route path="users/add" element={<AddUser />} />
+          </Route>
+
           <Route path="donation-requests" element={<AllDonationRequests />} />
-          <Route
-            path="profile"
-            element={
-              <ProtectedRoute allowedRoles={["admin", "donor", "volunteer"]}>
-                <Profile />
-              </ProtectedRoute>
-            }
-          />
+          <Route path="profile" element={<Profile />} />
         </Route>
 
         <Route path="/unauthorized" element={<Unauthorized />} />

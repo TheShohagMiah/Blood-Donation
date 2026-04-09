@@ -1,15 +1,19 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import {
   MapPin,
   Phone,
   MessageSquare,
   ShieldCheck,
   Filter,
+  RefreshCcw,
+  Droplet,
+  Activity,
 } from "lucide-react";
 import { districts } from "../../data/districts";
 import Select from "../../ui/Select";
 import Button from "../../ui/Button";
 
+// Internal Data Store
 const donors = [
   {
     id: 1,
@@ -47,235 +51,201 @@ const donors = [
     status: "Available",
     lastDonation: "3 months ago",
   },
-  // ... more data
 ];
 
 const bloodGroups = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"];
 
 const FindDonors = () => {
-  // ১. অস্থায়ী স্টেট (ইউজার যখন ক্লিক করছে)
-  const [tFilters, setTFilters] = useState({
+  // 1. DRAFT STATE (What user sees in sidebar)
+  const [params, setParams] = useState({
     bloodGroup: "",
     district: "",
     availability: "all",
   });
 
-  // ২. আসল ফিল্টার স্টেট (বাটনে ক্লিক করলে আপডেট হবে)
+  // 2. ACTIVE STATE (What the grid is actually showing)
   const [activeFilter, setActiveFilter] = useState({
     bloodGroup: "",
     district: "",
     availability: "all",
   });
 
-  // ৩. ফিল্টারিং লজিক (সবসময় activeFilter ব্যবহার করবে)
-  const filteredDonors = donors.filter((donor) => {
-    const matchGroup = activeFilter.bloodGroup
-      ? donor.bloodGroup === activeFilter.bloodGroup
-      : true;
-    const matchDistrict = activeFilter.district
-      ? donor.district === activeFilter.district
-      : true;
-    const matchAvailability =
-      activeFilter.availability === "available"
-        ? donor.status === "Available"
+  // 3. Logic: Filtered donors derived from activeFilter
+  const filteredDonors = useMemo(() => {
+    return donors.filter((donor) => {
+      const matchGroup = activeFilter.bloodGroup
+        ? donor.bloodGroup === activeFilter.bloodGroup
         : true;
-
-    return matchGroup && matchDistrict && matchAvailability;
-  });
+      const matchDistrict = activeFilter.district
+        ? donor.district === activeFilter.district
+        : true;
+      const matchAvailability =
+        activeFilter.availability === "available"
+          ? donor.status === "Available"
+          : true;
+      return matchGroup && matchDistrict && matchAvailability;
+    });
+  }, [activeFilter]);
 
   const handleChangeFilter = (name, value) => {
-    setTFilters((prev) => ({ ...prev, [name]: value }));
+    setParams((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleApplyFilter = () => {
-    setActiveFilter(tFilters);
+  const handleApplyFilter = (e) => {
+    e.preventDefault();
+    setActiveFilter(params);
   };
 
   const handleReset = () => {
     const initial = { bloodGroup: "", district: "", availability: "all" };
-    setTFilters(initial);
+    setParams(initial);
     setActiveFilter(initial);
   };
 
   return (
-    <div className="flex flex-col lg:flex-row gap-8 animate-in fade-in duration-500">
-      {/* 1. Filter Sidebar */}
-      <aside className="w-full lg:w-80 space-y-6">
-        <div className="bg-[var(--color-surface-card)] border border-[var(--color-border-default)] p-6 rounded-[var(--radius-xl)] lg:sticky lg:top-28">
-          <div className="flex items-center justify-between mb-6">
+    <div className="flex flex-col lg:flex-row gap-8 animate-in fade-in duration-500 pb-20">
+      {/* 1. SIDEBAR: TECHNICAL CONTROL PANEL */}
+      <aside className="w-full lg:w-80 group">
+        <div className="bg-[var(--color-surface-card)] border border-[var(--color-border-default)] rounded-[var(--radius-xl)] overflow-hidden lg:sticky lg:top-28 transition-all duration-300 hover:border-[var(--color-border-strong)] shadow-sm">
+          {/* Header Section */}
+          <div className="flex items-center justify-between px-5 py-4 border-b border-[var(--color-border-default)] bg-[var(--color-surface-muted)]/30">
             <div className="flex items-center gap-2">
-              <Filter size={16} className="text-[var(--color-primary-600)]" />
-              <h2 className="text-[11px] font-bold uppercase tracking-[0.2em] text-[var(--color-content-primary)]">
-                Filter Donors
+              <div className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
+              <h2 className="text-[10px] font-black uppercase tracking-[0.25em] text-[var(--color-content-primary)]">
+                Registry Filter
               </h2>
             </div>
             <button
               onClick={handleReset}
-              className="text-[10px] font-bold uppercase text-[var(--color-primary-600)] hover:underline"
+              className="group/reset flex items-center gap-1.5 text-[9px] font-black uppercase tracking-widest text-[var(--color-content-muted)] hover:text-red-500 transition-colors"
             >
+              <RefreshCcw
+                size={10}
+                className="group-hover/reset:rotate-[-180deg] transition-transform duration-500"
+              />
               Reset
             </button>
           </div>
 
-          <div className="space-y-5">
-            <Select
-              label="Blood Group"
-              value={tFilters.bloodGroup}
-              onChange={(e) => handleChangeFilter("bloodGroup", e.target.value)}
-            >
-              <option value="">Any Group</option>
-              {bloodGroups.map((g) => (
-                <option key={g} value={g}>
-                  {g}
-                </option>
-              ))}
-            </Select>
-
-            <Select
-              label="District"
-              value={tFilters.district}
-              onChange={(e) => handleChangeFilter("district", e.target.value)}
-            >
-              <option value="">Any District</option>
-              {districts.map((d) => (
-                <option key={d.id} value={d.name}>
-                  {d.name}
-                </option>
-              ))}
-            </Select>
-
-            <div className="space-y-1.5">
-              <label className="text-[11px] uppercase tracking-[0.12em] text-[var(--color-content-primary)] ml-1">
-                Availability
-              </label>
-              <div className="flex gap-2">
-                <button
-                  onClick={() =>
-                    handleChangeFilter("availability", "available")
+          <form onSubmit={handleApplyFilter} className="p-5 space-y-7">
+            <div className="space-y-6">
+              {/* Classification Selector */}
+              <div className="space-y-3">
+                <label className="flex items-center gap-2 text-[9px] font-black uppercase tracking-[0.15em] text-[var(--color-content-muted)]">
+                  <Droplet size={12} className="text-red-500" /> 01. Blood Group
+                </label>
+                <Select
+                  value={params.bloodGroup}
+                  onChange={(e) =>
+                    handleChangeFilter("bloodGroup", e.target.value)
                   }
-                  className={`flex-1 py-2 text-[10px] font-bold uppercase border rounded-md transition-all ${
-                    tFilters.availability === "available"
-                      ? "border-[var(--color-primary-600)] bg-[var(--color-primary-50)] text-[var(--color-primary-600)]"
-                      : "border-[var(--color-border-default)] text-[var(--color-content-muted)]"
-                  }`}
+                  className="bg-[var(--color-surface-secondary)] border-transparent focus:border-[var(--color-primary-600)] font-bold text-sm h-11"
                 >
-                  Available
-                </button>
-                <button
-                  onClick={() => handleChangeFilter("availability", "all")}
-                  className={`flex-1 py-2 text-[10px] font-bold uppercase border rounded-md transition-all ${
-                    tFilters.availability === "all"
-                      ? "border-[var(--color-primary-600)] bg-[var(--color-primary-50)] text-[var(--color-primary-600)]"
-                      : "border-[var(--color-border-default)] text-[var(--color-content-muted)]"
-                  }`}
+                  <option value="">Any Classification</option>
+                  {bloodGroups.map((g) => (
+                    <option key={g} value={g}>
+                      {g}
+                    </option>
+                  ))}
+                </Select>
+              </div>
+
+              {/* District Selector */}
+              <div className="space-y-3">
+                <label className="flex items-center gap-2 text-[9px] font-black uppercase tracking-[0.15em] text-[var(--color-content-muted)]">
+                  <MapPin size={12} /> 02. Geographic Region
+                </label>
+                <Select
+                  value={params.district}
+                  onChange={(e) =>
+                    handleChangeFilter("district", e.target.value)
+                  }
+                  className="bg-[var(--color-surface-secondary)] border-transparent focus:border-[var(--color-primary-600)] font-bold text-sm h-11"
                 >
-                  All
-                </button>
+                  <option value="">All Regions</option>
+                  {districts.map((d) => (
+                    <option key={d.id} value={d.name}>
+                      {d.name}
+                    </option>
+                  ))}
+                </Select>
+              </div>
+
+              {/* Status Toggle Selector */}
+              <div className="space-y-3">
+                <label className="flex items-center gap-2 text-[9px] font-black uppercase tracking-[0.15em] text-[var(--color-content-muted)]">
+                  <Activity size={12} /> 03. Status Protocol
+                </label>
+                <div className="grid grid-cols-2 gap-2 bg-[var(--color-surface-secondary)] p-1 rounded-lg border border-[var(--color-border-default)]">
+                  {["all", "available"].map((status) => (
+                    <label
+                      key={status}
+                      className={`
+                        cursor-pointer text-center py-2 text-[10px] font-black uppercase tracking-tighter rounded-md transition-all
+                        ${
+                          params.availability === status
+                            ? "bg-[var(--color-surface-card)] text-[var(--color-primary-600)] shadow-sm border border-[var(--color-border-default)]"
+                            : "text-[var(--color-content-muted)] hover:text-[var(--color-content-primary)]"
+                        }
+                      `}
+                    >
+                      <input
+                        type="radio"
+                        className="hidden"
+                        name="availability"
+                        value={status}
+                        checked={params.availability === status}
+                        onChange={(e) =>
+                          handleChangeFilter("availability", e.target.value)
+                        }
+                      />
+                      {status === "all" ? "Universal" : "Available"}
+                    </label>
+                  ))}
+                </div>
               </div>
             </div>
 
             <Button
-              onClick={handleApplyFilter}
-              variant="primary"
-              className="w-full h-11 mt-4"
+              type="submit"
+              className="w-full h-12 bg-[var(--color-content-primary)] hover:bg-black text-white rounded-xl flex items-center justify-center gap-3 transition-all active:scale-[0.97] border-none shadow-md"
             >
-              Apply Filters
+              <Filter size={16} strokeWidth={3} />
+              <span className="text-[10px] font-black uppercase tracking-[0.2em]">
+                Initiate Search
+              </span>
             </Button>
-          </div>
+
+            <div className="pt-2 border-t border-[var(--color-border-default)]">
+              <p className="text-[8px] font-bold text-[var(--color-content-muted)] uppercase tracking-widest leading-relaxed">
+                System v3.0 // Ready for Query
+              </p>
+            </div>
+          </form>
         </div>
       </aside>
 
-      {/* 2. Donors Grid */}
+      {/* 2. MAIN CONTENT: RESULTS GRID */}
       <main className="flex-1 space-y-6">
         <div className="flex items-center justify-between px-2">
-          <p className="text-sm text-[var(--color-content-muted)]">
-            Showing{" "}
-            <span className="font-bold text-[var(--color-content-primary)]">
+          <p className="text-[10px] font-black uppercase tracking-widest text-[var(--color-content-muted)]">
+            Displaying{" "}
+            <span className="text-[var(--color-content-primary)] font-black">
               {filteredDonors.length}
             </span>{" "}
-            verified donors
+            Verified Records
           </p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {filteredDonors.length > 0 ? (
             filteredDonors.map((donor) => (
-              <div
-                key={donor.id}
-                className="bg-[var(--color-surface-card)] border border-[var(--color-border-default)] p-6 rounded-[var(--radius-xl)] hover:shadow-md transition-all group"
-              >
-                <div className="flex justify-between items-start mb-4">
-                  <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-full bg-[var(--color-surface-muted)] flex items-center justify-center text-[var(--color-content-primary)] border border-[var(--color-border-default)]">
-                      <ShieldCheck
-                        size={20}
-                        className={
-                          donor.status === "Available"
-                            ? "text-green-500"
-                            : "text-amber-500"
-                        }
-                      />
-                    </div>
-                    <div>
-                      <h3 className="font-bold text-[var(--color-content-primary)]">
-                        {donor.name}
-                      </h3>
-                      <p className="text-[12px] text-[var(--color-content-muted)] flex items-center gap-1">
-                        <MapPin size={12} /> {donor.area}, {donor.district}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="text-center">
-                    <span className="block text-2xl font-black text-[var(--color-primary-600)] leading-none">
-                      {donor.bloodGroup}
-                    </span>
-                    <span className="text-[9px] font-bold uppercase tracking-tighter text-[var(--color-content-muted)]">
-                      Group
-                    </span>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-3 mb-6">
-                  <div className="bg-[var(--color-surface-muted)] p-2 rounded-lg text-center">
-                    <p className="text-[9px] font-bold uppercase text-[var(--color-content-muted)]">
-                      Last Donated
-                    </p>
-                    <p className="text-[11px] font-bold text-[var(--color-content-primary)]">
-                      {donor.lastDonation}
-                    </p>
-                  </div>
-                  <div className="bg-[var(--color-surface-muted)] p-2 rounded-lg text-center">
-                    <p className="text-[9px] font-bold uppercase text-[var(--color-content-muted)]">
-                      Status
-                    </p>
-                    <p
-                      className={`text-[11px] font-bold ${donor.status === "Available" ? "text-green-600" : "text-amber-600"}`}
-                    >
-                      {donor.status}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex gap-2">
-                  <Button
-                    variant="secondary"
-                    className="flex-1 h-10 gap-2 text-xs"
-                  >
-                    <MessageSquare size={14} /> Message
-                  </Button>
-                  <Button
-                    variant="primary"
-                    className="flex-1 h-10 gap-2 text-xs"
-                  >
-                    <Phone size={14} /> Call Now
-                  </Button>
-                </div>
-              </div>
+              <DonorCard key={donor.id} donor={donor} />
             ))
           ) : (
-            <div className="col-span-full py-20 text-center bg-[var(--color-surface-muted)] rounded-[var(--radius-xl)] border border-dashed">
-              <p className="text-[var(--color-content-muted)]">
-                No donors found matching your criteria.
+            <div className="col-span-full py-24 text-center bg-[var(--color-surface-muted)]/30 rounded-[var(--radius-xl)] border border-dashed border-[var(--color-border-default)]">
+              <p className="text-[10px] font-black uppercase tracking-[0.3em] text-[var(--color-content-muted)]">
+                No matching records identified in registry
               </p>
             </div>
           )}
@@ -284,5 +254,79 @@ const FindDonors = () => {
     </div>
   );
 };
+
+// Sub-component for clean rendering
+const DonorCard = ({ donor }) => (
+  <div className="bg-[var(--color-surface-card)] border border-[var(--color-border-default)] p-6 rounded-[var(--radius-xl)] hover:border-[var(--color-primary-600)] transition-all group hover:shadow-lg">
+    <div className="flex justify-between items-start mb-6">
+      <div className="flex items-center gap-4">
+        <div className="w-12 h-12 rounded-xl bg-[var(--color-surface-muted)] flex items-center justify-center border border-[var(--color-border-default)]">
+          <ShieldCheck
+            size={20}
+            className={
+              donor.status === "Available" ? "text-green-500" : "text-amber-500"
+            }
+          />
+        </div>
+        <div>
+          <h3 className="font-bold text-[var(--color-content-primary)] uppercase tracking-tight leading-none mb-1">
+            {donor.name}
+          </h3>
+          <p className="text-[11px] font-bold text-[var(--color-content-muted)] flex items-center gap-1 opacity-80">
+            <MapPin size={12} className="text-[var(--color-primary-500)]" />{" "}
+            {donor.area}, {donor.district}
+          </p>
+        </div>
+      </div>
+      <div className="text-right">
+        <span className="block text-2xl font-black text-[var(--color-primary-600)] leading-none italic">
+          {donor.bloodGroup}
+        </span>
+        <span className="text-[9px] font-black uppercase tracking-tighter text-[var(--color-content-muted)]">
+          Group
+        </span>
+      </div>
+    </div>
+
+    <div className="grid grid-cols-2 gap-3 mb-6">
+      <DataBox label="Last Donated" value={donor.lastDonation} />
+      <DataBox
+        label="Status"
+        value={donor.status}
+        colorClass={
+          donor.status === "Available" ? "text-green-600" : "text-amber-600"
+        }
+      />
+    </div>
+
+    <div className="flex gap-2 pt-2">
+      <Button
+        variant="secondary"
+        className="flex-1 h-10 gap-2 text-[10px] font-black uppercase tracking-widest"
+      >
+        <MessageSquare size={14} /> Message
+      </Button>
+      <Button
+        variant="primary"
+        className="flex-1 h-10 gap-2 text-[10px] font-black uppercase tracking-widest"
+      >
+        <Phone size={14} /> Call Now
+      </Button>
+    </div>
+  </div>
+);
+
+const DataBox = ({
+  label,
+  value,
+  colorClass = "text-[var(--color-content-primary)]",
+}) => (
+  <div className="bg-[var(--color-surface-muted)]/50 p-2.5 rounded-lg border border-[var(--color-border-default)]/50">
+    <p className="text-[8px] font-black uppercase text-[var(--color-content-muted)] tracking-widest mb-0.5">
+      {label}
+    </p>
+    <p className={`text-[11px] font-black uppercase ${colorClass}`}>{value}</p>
+  </div>
+);
 
 export default FindDonors;

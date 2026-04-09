@@ -2,12 +2,14 @@ import { Router } from "express";
 import {
   deleteUser,
   getAllUsers,
+  getDashboardStats,
   getDonors,
   getMe,
   getVolunteers,
   login,
   logout,
   registration,
+  updateProfile,
   updateUserRole,
   updateUserStatus,
 } from "../controllers/authController.js";
@@ -20,7 +22,20 @@ const authRoutes = Router();
 
 authRoutes.post("/register", registration); //completed
 authRoutes.post("/login", login); //completed
+authRoutes.get(
+  "/stats",
+  isAuthenticated,
+  authorizeRoles("admin"),
+  getDashboardStats,
+);
+authRoutes.patch("/update-profile", isAuthenticated, updateProfile);
 authRoutes.post("/logout", isAuthenticated, logout);
+authRoutes.get(
+  "/stats",
+  isAuthenticated,
+  authorizeRoles("admin"),
+  getDashboardStats,
+);
 authRoutes.get("/me", isAuthenticated, getMe);
 authRoutes.get("/donors", getDonors);
 authRoutes.get("/volunteers", getVolunteers);

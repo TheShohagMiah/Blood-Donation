@@ -5,6 +5,24 @@ import { motion, AnimatePresence } from "framer-motion";
 import { navLinks } from "../../data/navLinks";
 import { useSelector } from "react-redux";
 
+const getFilteredNav = (links, userRole) => {
+  return (
+    links
+      .filter((link) => link.roles.includes(userRole))
+      .map((link) => {
+        if (link.subMenu) {
+          return {
+            ...link,
+            subMenu: link.subMenu.filter((sub) => sub.roles.includes(userRole)),
+          };
+        }
+        return link;
+      })
+      // Ensure parent categories with empty subMenus (after filtering) are removed
+      .filter((link) => !link.subMenu || link.subMenu.length > 0)
+  );
+};
+
 const Sidebar = ({
   isCollapsed,
   isSubMenuOpen,
@@ -20,9 +38,7 @@ const Sidebar = ({
   };
 
   const { user } = useSelector((state) => state.auth);
-
-  const filterNavLinks = navLinks.filter((l) => l.roles.includes(userRole));
-
+  const filteredLinks = getFilteredNav(navLinks, user?.role);
   // ✅ Auto close submenu when collapsed to prevent floating menus
   useEffect(() => {
     if (isCollapsed) setIsSubMenuOpen(null);
@@ -92,7 +108,7 @@ const Sidebar = ({
 
           {/* Navigation */}
           <nav className="p-4 space-y-2 overflow-y-auto flex-1 custom-scrollbar">
-            {filterNavLinks.map((item, i) => {
+            {filteredLinks.map((item, i) => {
               const isParentActive = item?.subMenu?.some(
                 (sub) => location.pathname === sub.path,
               );

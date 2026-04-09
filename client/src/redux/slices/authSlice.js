@@ -13,8 +13,8 @@ const authSlice = createSlice({
   reducers: {
     setCredentials: (state, action) => {
       state.isAuthenticated = true;
-      state.user = action.payload; // ✅ Directly set the user
-      state.access_token = null; // Token is in httpOnly cookie, not needed here
+      state.user = action.payload;
+      state.access_token = null;
     },
 
     logout: (state) => {

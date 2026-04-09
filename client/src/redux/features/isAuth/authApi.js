@@ -26,6 +26,15 @@ export const authApi = createApi({
       invalidatesTags: ["User"],
     }),
 
+    updateProfile: builder.mutation({
+      query: (data) => ({
+        url: "/update-profile",
+        method: "PATCH",
+        body: data,
+      }),
+      invalidatesTags: ["User"],
+    }),
+
     logout: builder.mutation({
       query: () => ({
         url: "/logout",
@@ -43,6 +52,10 @@ export const authApi = createApi({
     getAllUsers: builder.query({
       query: () => "/users",
       providesTags: ["User"],
+    }),
+
+    getStats: builder.query({
+      query: () => "/stats",
     }),
 
     updateStatus: builder.mutation({
@@ -74,6 +87,8 @@ export const authApi = createApi({
 export const {
   useRegistrationMutation,
   useLoginMutation,
+  useGetStatsQuery,
+  useUpdateProfileMutation,
   useLogoutMutation,
   useGetMeQuery,
   useGetAllUsersQuery,

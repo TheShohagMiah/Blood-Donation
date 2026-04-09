@@ -5,11 +5,13 @@ import { authApi } from "../features/isAuth/authApi";
 
 import { rtkQuerySuccessLogger } from "../middleware/successLogger";
 import { bloodRequestApi } from "../features/bloodRequest/bloodRequestApi";
+import apiSlice from "../features/apiSlice";
 
 export const store = configureStore({
   reducer: {
     [authApi.reducerPath]: authApi.reducer,
     [bloodRequestApi.reducerPath]: bloodRequestApi.reducer,
+    [apiSlice.reducerPath]: apiSlice.reducer,
     auth: authReducer,
     ui: uiReducer,
   },
@@ -18,6 +20,7 @@ export const store = configureStore({
     getDefaultMiddleware().concat(
       authApi.middleware,
       bloodRequestApi.middleware,
+      apiSlice.middleware,
       rtkQuerySuccessLogger,
     ),
 });

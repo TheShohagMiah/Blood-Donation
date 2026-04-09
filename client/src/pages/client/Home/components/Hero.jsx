@@ -45,10 +45,10 @@ const Hero = () => {
 
           <div className="flex flex-col sm:flex-row items-center gap-4 w-full sm:w-auto pt-2">
             <Button
-              onClick={() => setCreateBloodRequest(true)}
+              onClick={() => navigate("/register")}
               className="btn-lg btn-primary w-full sm:w-auto shadow-lg shadow-primary-500/20 hover:scale-[1.02] transition-transform"
             >
-              Need Blood <ArrowRight className="ml-2" size={20} />
+              Join as a donor
             </Button>
             <Button
               onClick={() => navigate("/find-donors")}

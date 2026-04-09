@@ -4,8 +4,20 @@ import { X, Clock, MessageSquare, CheckCircle2 } from "lucide-react";
 import Button from "../ui/Button";
 import Input from "../ui/Input";
 import Select from "../ui/Select";
+import { useCreateDonationMutation } from "../redux/features/donationApiSlice";
 
-const DonationModal = ({ isOpen, onClose, onSubmit, selectedRequest }) => {
+const DonationModal = ({ isOpen, onClose, selectedRequest }) => {
+  const [createDonation, { isSuccess, error }] = useCreateDonationMutation();
+
+  const handleDonationSubmit = async (data) => {
+    try {
+      await createDonation({
+        donationData: { ...data, requestId: selectedRequest._id },
+      }).unwrap();
+    } catch (error) {
+      console.error("Failed to create donation:", error);
+    }
+  };
   const {
     register,
     handleSubmit,
@@ -35,7 +47,7 @@ const DonationModal = ({ isOpen, onClose, onSubmit, selectedRequest }) => {
       />
 
       <form
-        onSubmit={handleSubmit(onSubmit)}
+        onSubmit={handleSubmit(handleDonationSubmit)}
         className="relative w-full max-w-lg bg-[var(--color-surface-card)] rounded-[var(--radius-2xl)] border border-[var(--color-border-strong)] shadow-[var(--shadow-2xl)] overflow-hidden animate-in zoom-in-95 duration-300"
       >
         {/* Header */}

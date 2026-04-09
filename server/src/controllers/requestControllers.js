@@ -48,7 +48,7 @@ export const getRequests = async (req, res, next) => {
 
     const [totalRequests, requests] = await Promise.all([
       Request.countDocuments(query),
-      Request.find(query)
+      Request.find({ ...query, status: "pending" })
         .populate("requester", "name email contactNumber")
         .skip(skip)
         .limit(limitNum)

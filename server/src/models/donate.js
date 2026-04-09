@@ -1,6 +1,6 @@
 import mongoose from "mongoose";
 
-const donateSchema = new mongoose(
+const donateSchema = new mongoose.Schema(
   {
     requestId: {
       type: mongoose.Schema.Types.ObjectId,
@@ -8,7 +8,7 @@ const donateSchema = new mongoose(
       required: true,
     },
 
-    donarId: {
+    donorId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
       required: true,
@@ -32,7 +32,7 @@ const donateSchema = new mongoose(
   { timestamps: true },
 );
 
-donateSchema.index({ requesterId: 1, donorId: 1 }, { unique: true });
+donateSchema.index({ requestId: 1, donorId: 1 }, { unique: true });
 
 const Donate = mongoose.model("Donate", donateSchema);
 export default Donate;

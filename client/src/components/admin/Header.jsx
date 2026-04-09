@@ -212,13 +212,13 @@ const Header = ({
                   </p>
                 </div>
                 <Link
-                  to="/profile"
+                  to="/dashboard/profile"
                   className="flex items-center gap-3 px-4 py-2.5 text-xs hover:bg-[var(--color-surface-muted)] transition-colors"
                 >
                   <User size={14} /> My Profile
                 </Link>
                 <Link
-                  to="/settings"
+                  to="/dashboard/settings"
                   className="flex items-center gap-3 px-4 py-2.5 text-xs hover:bg-[var(--color-surface-muted)] transition-colors"
                 >
                   <Settings size={14} /> Console Settings

@@ -5,6 +5,7 @@ import corsOptions from "./config/corsOptions.js";
 import errorHandler from "./utilis/errorHandler.js";
 import authRoutes from "./routes/authRoutes.js";
 import requestRoutes from "./routes/requestRoutes.js";
+import donationRoutes from "./routes/donationRoutes.js";
 
 const app = express();
 
@@ -21,6 +22,8 @@ app.get("/", (req, res) => {
 
 app.use("/api/auth", authRoutes);
 app.use("/api/requests", requestRoutes);
+app.use("/api/donations", donationRoutes);
+
 // --- 404 Handler ---
 app.use((req, res, next) => {
   const error = new Error(`Not Found - ${req.originalUrl}`);

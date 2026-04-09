@@ -1,5 +1,7 @@
 import jwt from "jsonwebtoken";
 import User from "../models/user.js";
+import Donate from "../models/donate.js";
+import Request from "../models/request.js";
 
 // --- Registration ---
 export const registration = async (req, res, next) => {
@@ -74,7 +76,7 @@ export const login = async (req, res, next) => {
 // --- Get Current User (Profile) ---
 export const getMe = async (req, res, next) => {
   // req.user is already populated by your 'protect' middleware
-  const user = await User.findById(req.user.id);
+  const user = await User.findById(req.user.id).select("-password");
 
   if (!user) {
     const error = new Error("User not found.");
@@ -89,6 +91,10 @@ export const getMe = async (req, res, next) => {
       name: user.name,
       email: user.email,
       role: user.role,
+      bloodGroup: user.bloodGroup,
+      district: user.district,
+      upazila: user.upazila,
+      status: user.status,
     },
   });
 };
@@ -105,6 +111,49 @@ export const logout = (req, res, next) => {
     success: true,
     message: "Logged out successfully.",
   });
+};
+
+export const updateProfile = async (req, res, next) => {
+  try {
+    const userId = req.user.id;
+    const { name, district, upazila, bloodGroup, avatar } = req.body;
+
+    // 1. Check if user exists
+    const user = await User.findById(userId);
+    if (!user) {
+      const error = new Error("User not found.");
+      error.statusCode = 404;
+      return next(error);
+    }
+
+    // 2. Prepare update object
+    // Note: We explicitly exclude 'email' and 'role' to prevent unauthorized changes
+    const updateData = {
+      name: name || user.name,
+      district: district || user.district,
+      upazila: upazila || user.upazila,
+      bloodGroup: bloodGroup || user.bloodGroup,
+      avatar: avatar || user.avatar,
+    };
+
+    // 3. Update database
+    const updatedUser = await User.findByIdAndUpdate(
+      userId,
+      { $set: updateData },
+      {
+        new: true, // Returns the updated document
+        runValidators: true, // Ensures schema validation rules apply
+      },
+    ).select("-password"); // Never return the password
+
+    res.status(200).json({
+      success: true,
+      message: "Profile updated successfully",
+      data: updatedUser,
+    });
+  } catch (error) {
+    next(error);
+  }
 };
 
 export const getAllUsers = async (req, res, next) => {
@@ -301,6 +350,30 @@ export const deleteUser = async (req, res, next) => {
     res.status(200).json({
       success: true,
       message: "User has been deleted successfully.",
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const getDashboardStats = async (req, res, next) => {
+  try {
+    const [totalUsers] = await Promise.all([
+      User.countDocuments({ status: { $ne: "blocked" } }),
+    ]);
+
+    const [totalRequests, totalDonations] = await Promise.all([
+      Request.countDocuments({ type: "request", status: "completed" }),
+      Donate.countDocuments({ donorStatus: "donated" }),
+    ]);
+
+    res.status(200).json({
+      success: true,
+      data: {
+        totalUsers,
+        totalRequests,
+        totalDonations,
+      },
     });
   } catch (error) {
     next(error);
