@@ -109,7 +109,7 @@ const Header = ({
             <span className="hover:text-[var(--color-primary-600)] cursor-pointer transition-colors">
               Console
             </span>
-            {pathnames.map((name, index) => (
+            {/* {pathnames.map((name, index) => (
               <React.Fragment key={index}>
                 <ChevronRight size={12} className="opacity-40" />
                 <span
@@ -122,7 +122,7 @@ const Header = ({
                   {name.replace("-", " ")}
                 </span>
               </React.Fragment>
-            ))}
+            ))} */}
           </div>
         </div>
 

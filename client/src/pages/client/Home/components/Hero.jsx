@@ -10,6 +10,8 @@ import {
 } from "lucide-react";
 import CreateBloodRequest from "./CreateBloodRequest";
 import { useNavigate } from "react-router-dom";
+import { motion } from "framer-motion";
+import { LayoutTextFlip } from "../../../../components/ui/layout-text-flip";
 
 const Hero = () => {
   const navigate = useNavigate();
@@ -33,8 +35,13 @@ const Hero = () => {
 
           <div className="space-y-4 lg:space-y-6">
             <h1 className="text-display text-4xl sm:text-6xl lg:text-8xl font-bold text-content-primary leading-[1.1] lg:leading-[0.95] tracking-tight text-balance">
-              Giving Blood <br />
-              Is Giving <span className="text-primary-600">Life.</span>
+              Giving Blood Is Giving{" "}
+              <motion.span className="">
+                <LayoutTextFlip
+                  words={["Life", "Joy", "Hope", "Strength", "Love"]}
+                />
+              </motion.span>
+              {/* <span className="text-primary-600">Life.</span> */}
             </h1>
             <p className="text-base lg:text-lg text-content-secondary max-w-lg leading-relaxed text-pretty mx-auto lg:mx-0">
               Experience the fastest way to connect with blood donors. Our

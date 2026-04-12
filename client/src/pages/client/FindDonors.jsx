@@ -12,50 +12,14 @@ import {
 import { districts } from "../../data/districts";
 import Select from "../../ui/Select";
 import Button from "../../ui/Button";
-
-// Internal Data Store
-const donors = [
-  {
-    id: 1,
-    name: "Tanvir Ahmed",
-    bloodGroup: "O+",
-    district: "Dhaka",
-    area: "Dhanmondi",
-    status: "Available",
-    lastDonation: "6 months ago",
-  },
-  {
-    id: 2,
-    name: "Sajid Hasan",
-    bloodGroup: "AB-",
-    district: "Tangail",
-    area: "Uttara",
-    status: "Available",
-    lastDonation: "1 year ago",
-  },
-  {
-    id: 3,
-    name: "Nusrat Jahan",
-    bloodGroup: "B+",
-    district: "Chittagong",
-    area: "Agrabad",
-    status: "Away",
-    lastDonation: "2 months ago",
-  },
-  {
-    id: 4,
-    name: "Ariful Islam",
-    bloodGroup: "A-",
-    district: "Dhaka",
-    area: "Mirpur",
-    status: "Available",
-    lastDonation: "3 months ago",
-  },
-];
+import { useGetDonorsQuery } from "../../redux/features/isAuth/authApi";
+import { formatDate } from "../../../lib/formateDate";
 
 const bloodGroups = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"];
 
 const FindDonors = () => {
+  const { data: allDonors, isLoading } = useGetDonorsQuery();
+  console.log(allDonors?.data);
   // 1. DRAFT STATE (What user sees in sidebar)
   const [params, setParams] = useState({
     bloodGroup: "",
@@ -72,7 +36,8 @@ const FindDonors = () => {
 
   // 3. Logic: Filtered donors derived from activeFilter
   const filteredDonors = useMemo(() => {
-    return donors.filter((donor) => {
+    const baseDonors = allDonors?.data || [];
+    return baseDonors.filter((donor) => {
       const matchGroup = activeFilter.bloodGroup
         ? donor.bloodGroup === activeFilter.bloodGroup
         : true;
@@ -85,7 +50,7 @@ const FindDonors = () => {
           : true;
       return matchGroup && matchDistrict && matchAvailability;
     });
-  }, [activeFilter]);
+  }, [activeFilter, allDonors]);
 
   const handleChangeFilter = (name, value) => {
     setParams((prev) => ({ ...prev, [name]: value }));
@@ -102,10 +67,19 @@ const FindDonors = () => {
     setActiveFilter(initial);
   };
 
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[var(--color-content-muted)]">
+          Loading donor registry...
+        </p>
+      </div>
+    );
+  }
   return (
     <div className="flex flex-col lg:flex-row gap-8 animate-in fade-in duration-500 pb-20">
       {/* 1. SIDEBAR: TECHNICAL CONTROL PANEL */}
-      <aside className="w-full lg:w-80 group">
+      <aside className="w-full lg:w-80 group sticky top-20 ">
         <div className="bg-[var(--color-surface-card)] border border-[var(--color-border-default)] rounded-[var(--radius-xl)] overflow-hidden lg:sticky lg:top-28 transition-all duration-300 hover:border-[var(--color-border-strong)] shadow-sm">
           {/* Header Section */}
           <div className="flex items-center justify-between px-5 py-4 border-b border-[var(--color-border-default)] bg-[var(--color-surface-muted)]/30">
@@ -274,25 +248,32 @@ const DonorCard = ({ donor }) => (
           </h3>
           <p className="text-[11px] font-bold text-[var(--color-content-muted)] flex items-center gap-1 opacity-80">
             <MapPin size={12} className="text-[var(--color-primary-500)]" />{" "}
-            {donor.area}, {donor.district}
+            {donor.upazila}, {donor.district}
           </p>
         </div>
       </div>
-      <div className="text-right">
-        <span className="block text-2xl font-black text-[var(--color-primary-600)] leading-none italic">
+      <div className="text-right flex items-center gap-1">
+        {" "}
+        <Droplet size={14} className="text-red-600 fill-current" />
+        <span className="block text-2xl font-black text-[var(--color-primary-600)]">
           {donor.bloodGroup}
-        </span>
-        <span className="text-[9px] font-black uppercase tracking-tighter text-[var(--color-content-muted)]">
-          Group
         </span>
       </div>
     </div>
 
     <div className="grid grid-cols-2 gap-3 mb-6">
-      <DataBox label="Last Donated" value={donor.lastDonation} />
+      {/* Last Donation Date */}
+      {donor.lastDonationDate ? (
+        <DataBox
+          label="Last Donation"
+          value={formatDate(donor.lastDonationDate)}
+        />
+      ) : (
+        <DataBox label="Last Donation" value="Not yet" />
+      )}
       <DataBox
         label="Status"
-        value={donor.status}
+        value={donor?.isAvailable ? "Available" : "Unavailable"}
         colorClass={
           donor.status === "Available" ? "text-green-600" : "text-amber-600"
         }

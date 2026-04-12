@@ -1,12 +1,16 @@
 import { Router } from "express";
 import {
   createDonation,
-  getAllDonations,
+  getDonationsByUser,
+  updateDonationStatus,
+  deleteDonation,
 } from "../controllers/donateControllers.js";
 import { isAuthenticated } from "../middlewares/authMiddlewares.js";
 
 const donationRouter = Router();
 
 donationRouter.post("/", isAuthenticated, createDonation);
-donationRouter.get("", getAllDonations);
+donationRouter.get("/my-donations", isAuthenticated, getDonationsByUser);
+donationRouter.patch("/status/:id", isAuthenticated, updateDonationStatus);
+donationRouter.delete("/:id", isAuthenticated, deleteDonation);
 export default donationRouter;

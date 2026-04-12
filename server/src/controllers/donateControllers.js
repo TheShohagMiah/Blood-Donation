@@ -4,10 +4,9 @@ import User from "../models/user.js";
 
 export const createDonation = async (req, res, next) => {
   try {
-    const requestId = req.body.requestId;
+    const { status, message, estimatedArrival, requestId } = req.body;
     const donorId = req.user.id;
-
-    // check if blood request exists
+    // 1. Validate Request
     const bloodRequest = await Request.findById(requestId);
     if (!bloodRequest) {
       const error = new Error("This request is no longer available");
@@ -15,60 +14,63 @@ export const createDonation = async (req, res, next) => {
       return next(error);
     }
 
-    // check if donor exists
-    const donor = await User.findById(donorId);
-    if (!donor) {
-      const error = new Error("Donor not found. Please login again.");
-      error.statusCode = 404;
-      return next(error);
-    }
-
-    // check blood group is matched
-    // if (bloodRequest.bloodGroup !== donor.bloodGroup) {
-    //   const error = new Error(
-    //     "Your blood group does not match the recipient's requirement.",
-    //   );
-    //   error.status = 401;
-    //   return next(error);
-    // }
-
+    // 2. Prevent self-donation
     if (bloodRequest.requester.toString() === donorId) {
-      const error = new Error("You cannot donate to your own request.");
+      const error = new Error(
+        "Operational Error: You cannot donate to your own request.",
+      );
       error.statusCode = 400;
       return next(error);
     }
 
-    // check donor is available or not
+    // 3. Validate Donor & Eligibility
+    const donor = await User.findById(donorId);
+    if (!donor) {
+      const error = new Error("User record not identified.");
+      error.statusCode = 404;
+      return next(error);
+    }
+
+    // 90-day cooldown protocol
     if (donor.lastDonationDate) {
-      const lastDate = new Date(donor.lastDonationDate);
-      const today = new Date();
-      const diffInTime = today.getTime() - lastDate.getTime();
-      const diffInDays = Math.floor(diffInTime / (1000 * 3600 * 24));
+      const diffInDays = Math.floor(
+        (new Date() - new Date(donor.lastDonationDate)) / (1000 * 3600 * 24),
+      );
       if (diffInDays < 90) {
         const error = new Error(
-          `You must wait ${90 - diffInDays} more days before donating again.`,
+          `Eligibility Block: Wait ${90 - diffInDays} more days.`,
         );
         error.statusCode = 400;
         return next(error);
       }
     }
 
-    //    create a request
-    const { message, estimatedArrival } = req.body;
+    // 5. Update Blood Request Status
+    bloodRequest.status = "in-progress";
+    await bloodRequest.save();
+
+    // Keep the counter in sync with the actual collection via $inc
+    await User.findByIdAndUpdate(
+      donorId,
+      {
+        $inc: { totalDonations: 1 },
+        lastDonationDate: new Date(),
+        isAvailable: false,
+      },
+      { new: true },
+    );
+
+    // 4. Create Donation Record
     const donation = await Donate.create({
-      requestId: requestId,
-      donorId: donorId,
-      status: "interested",
+      requestId,
+      donorId,
+      status: "Pending",
       message,
       estimatedArrival,
     });
-
-    bloodRequest.status = "inprogress";
-    await bloodRequest.save();
-
     res.status(201).json({
       success: true,
-      message: "Thank you! Your interest to donate has been recorded.",
+      message: "Your intent to donate has been recorded.",
       data: donation,
     });
   } catch (error) {
@@ -76,45 +78,23 @@ export const createDonation = async (req, res, next) => {
   }
 };
 
-export const getAllDonations = async (req, res, next) => {
+export const getDonationsByUser = async (req, res, next) => {
   try {
-    const {
-      page = 1,
-      limit = 10,
-      bloodGroup,
-      status,
-      district,
-      upazila,
-    } = req.query;
+    const userId = req.user.id;
 
-    const filter = {};
-    if (bloodGroup) filter["bloodGroup"] = bloodGroup;
-    if (status) filter["status"] = status;
-    if (district) filter["district"] = district;
-    if (upazila) filter["upazila"] = upazila;
-
-    const searchTerm = req.query.search;
-
-    if (searchTerm) {
-      filter["$or"] = [
-        { hospitalName: { $regex: searchTerm, $options: "i" } },
-        { "donorId.name": { $regex: searchTerm, $options: "i" } },
-        { "requestId.patientName": { $regex: searchTerm, $options: "i" } },
-      ];
-    }
-
-    const pageNumber = parseInt(page);
-    const limitNumber = parseInt(limit);
-    const skip = (pageNumber - 1) * limitNumber;
+    // We use totalCount for the dashboard metrics
     const [totalDonations, donations] = await Promise.all([
-      Donate.countDocuments(filter),
-      Donate.find(filter)
-        .populate("donorId", "name bloodGroup contactInfo")
-        .populate("requestId", "patientName bloodGroup hospital location")
-        .skip(skip)
-        .limit(limitNumber)
+      Donate.countDocuments({ donorId: userId }),
+      Donate.find({ donorId: userId })
+        .populate({
+          path: "requestId",
+          select:
+            "recipientName bloodGroup hospitalName donationDate donationTime requester contactNumber upazila district status fullAddress",
+          populate: { path: "requester", select: "name" }, // Populate the person who asked
+        })
         .sort({ createdAt: -1 }),
     ]);
+
     res.status(200).json({
       success: true,
       data: donations,
@@ -125,53 +105,31 @@ export const getAllDonations = async (req, res, next) => {
   }
 };
 
-export const getDonationsByUser = async (req, res, next) => {
-  try {
-    const donorId = req.user.id;
-    const donations = await Donate.find({ donorId }).populate("requestId");
-
-    res.status(200).json({
-      success: true,
-      data: donations,
-    });
-  } catch (error) {
-    next(error);
-  }
-};
-
-export const getDonationsByRequest = async (req, res, next) => {
-  try {
-    const requestId = req.params.id;
-    const donations = await Donate.find({ requestId }).populate(
-      "donorId",
-      "name bloodGroup contactInfo",
-    );
-
-    res.status(200).json({
-      success: true,
-      data: donations,
-    });
-  } catch (error) {
-    next(error);
-  }
-};
-
 export const updateDonationStatus = async (req, res, next) => {
   try {
-    const donationId = req.params.id;
-    const { status } = req.body;
-    const donation = await Donate.findById(donationId);
+    const { id } = req.params;
+    const { status } = req.body; // e.g., 'Completed', 'In Progress'
 
+    const donation = await Donate.findById(id);
     if (!donation) {
-      const error = new Error("Donation not found.");
+      const error = new Error("Record not found.");
       error.statusCode = 404;
       return next(error);
     }
+
     donation.status = status;
     await donation.save();
+
+    // If donation is marked 'Completed', update the donor's last donation date
+    if (status === "Completed") {
+      await User.findByIdAndUpdate(donation.donorId, {
+        lastDonationDate: new Date(),
+      });
+    }
+
     res.status(200).json({
       success: true,
-      message: "Donation status updated successfully.",
+      message: "Protocol Updated: Status synchronized.",
       data: donation,
     });
   } catch (error) {
@@ -181,18 +139,17 @@ export const updateDonationStatus = async (req, res, next) => {
 
 export const deleteDonation = async (req, res, next) => {
   try {
-    const donationId = req.params.id;
-    const donation = await Donate.findById(donationId);
+    const donation = await Donate.findByIdAndDelete(req.params.id);
 
     if (!donation) {
-      const error = new Error("Donation not found.");
+      const error = new Error("Record not found.");
       error.statusCode = 404;
       return next(error);
     }
-    await donation.remove();
+
     res.status(200).json({
       success: true,
-      message: "Donation deleted successfully.",
+      message: "Record purged from registry.",
     });
   } catch (error) {
     next(error);

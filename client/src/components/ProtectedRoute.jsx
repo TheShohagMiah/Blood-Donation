@@ -13,7 +13,7 @@ export const ProtectedRoute = ({ children, allowedRoles = [] }) => {
 
   // Handle loading state to prevent flickering or premature redirects
   if (isLoading) {
-    return null; // Or a professional loading spinner component
+    return null;
   }
 
   if (!user) {

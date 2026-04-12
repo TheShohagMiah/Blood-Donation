@@ -8,6 +8,7 @@ import { useLoginMutation } from "../../redux/features/isAuth/authApi";
 import toast from "react-hot-toast";
 import { useDispatch } from "react-redux";
 import { setCredentials } from "../../redux/slices/authSlice";
+import { BackgroundGradient } from "../ui/background-gradient";
 
 const LoginPage = () => {
   const [loginUser, { data, isLoading, isSuccess, isError, error }] =
@@ -25,7 +26,7 @@ const LoginPage = () => {
     try {
       const response = await loginUser(formData).unwrap();
       dispatch(setCredentials(response?.user));
-      // navigate("/dashboard", { replace: true });
+      navigate("/", { replace: true });
     } catch (err) {
       const errMsg =
         err?.data?.message || "Terminal Error: Invalid Credentials";
@@ -36,7 +37,7 @@ const LoginPage = () => {
 
   return (
     <div className=" flex items-center justify-center bg-surface-main px-4 pt-10">
-      <div className="w-full max-w-lg space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700 card shadow-[var(--shadow-xl)] border-border-strong p-8 md:p-10">
+      <BackgroundGradient className="w-full max-w-2xl space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700 bg-surface-primary rounded-xl shadow-[var(--shadow-xl)] border-border-strong p-8 md:p-10">
         {/* Header Section */}
         <div className="text-center space-y-2">
           <h1 className="text-3xl font-bold tracking-tight text-[var(--color-content-primary)]">
@@ -107,7 +108,7 @@ const LoginPage = () => {
             create an account <ArrowRight size={12} />
           </Link>
         </p>
-      </div>
+      </BackgroundGradient>
     </div>
   );
 };

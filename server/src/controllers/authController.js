@@ -15,7 +15,6 @@ export const registration = async (req, res, next) => {
     return next(error);
   }
 
-  // Note: user.save() is called internally by User.create()
   const user = await User.create({
     name,
     email,
@@ -44,7 +43,6 @@ export const login = async (req, res, next) => {
     return next(error);
   }
 
-  // Generate Token
   const token = jwt.sign(
     { id: user._id, role: user.role },
     process.env.JWT_SECRET,
@@ -63,19 +61,13 @@ export const login = async (req, res, next) => {
   res.status(200).json({
     success: true,
     message: "Logged in successfully.",
-    user: {
-      id: user._id,
-      name: user.name,
-      email: user.email,
-      role: user.role,
-    },
+    user: { id: user._id, name: user.name, email: user.email, role: user.role },
     token,
   });
 };
 
 // --- Get Current User (Profile) ---
 export const getMe = async (req, res, next) => {
-  // req.user is already populated by your 'protect' middleware
   const user = await User.findById(req.user.id).select("-password");
 
   if (!user) {
@@ -87,6 +79,7 @@ export const getMe = async (req, res, next) => {
   res.status(200).json({
     success: true,
     user: {
+      ...user._doc, // Spread the user document to include all fields except password
       id: user._id,
       name: user.name,
       email: user.email,
@@ -95,10 +88,12 @@ export const getMe = async (req, res, next) => {
       district: user.district,
       upazila: user.upazila,
       status: user.status,
+      avatar: user.avatar,
     },
   });
 };
 
+// --- Logout ---
 export const logout = (req, res, next) => {
   res.cookie("token", null, {
     expires: new Date(Date.now()),
@@ -107,18 +102,42 @@ export const logout = (req, res, next) => {
     secure: process.env.NODE_ENV === "production",
   });
 
-  res.status(200).json({
-    success: true,
-    message: "Logged out successfully.",
-  });
+  res.status(200).json({ success: true, message: "Logged out successfully." });
 };
 
+export const changePassword = async (req, res, next) => {
+  try {
+    const userId = req.user.id;
+    const { currentPassword, newPassword } = req.body;
+    const user = await User.findById(userId).select("+password");
+    if (!user) {
+      const error = new Error("User not found.");
+      error.statusCode = 404;
+      return next(error);
+    }
+    const isMatch = await user.comparePassword(currentPassword);
+    if (!isMatch) {
+      const error = new Error("Current password is incorrect.");
+      error.statusCode = 401;
+      return next(error);
+    }
+    user.password = newPassword;
+    await user.save();
+    res.status(200).json({
+      success: true,
+      message: "Password changed successfully.",
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// --- Update Profile ---
 export const updateProfile = async (req, res, next) => {
   try {
     const userId = req.user.id;
     const { name, district, upazila, bloodGroup, avatar } = req.body;
 
-    // 1. Check if user exists
     const user = await User.findById(userId);
     if (!user) {
       const error = new Error("User not found.");
@@ -126,25 +145,20 @@ export const updateProfile = async (req, res, next) => {
       return next(error);
     }
 
-    // 2. Prepare update object
-    // Note: We explicitly exclude 'email' and 'role' to prevent unauthorized changes
+    // ✅ Fix 2: use !== undefined so empty strings can clear a field
     const updateData = {
-      name: name || user.name,
-      district: district || user.district,
-      upazila: upazila || user.upazila,
-      bloodGroup: bloodGroup || user.bloodGroup,
-      avatar: avatar || user.avatar,
+      name: name !== undefined ? name : user.name,
+      district: district !== undefined ? district : user.district,
+      upazila: upazila !== undefined ? upazila : user.upazila,
+      bloodGroup: bloodGroup !== undefined ? bloodGroup : user.bloodGroup,
+      avatar: avatar !== undefined ? avatar : user.avatar,
     };
 
-    // 3. Update database
     const updatedUser = await User.findByIdAndUpdate(
       userId,
       { $set: updateData },
-      {
-        new: true, // Returns the updated document
-        runValidators: true, // Ensures schema validation rules apply
-      },
-    ).select("-password"); // Never return the password
+      { new: true, runValidators: true },
+    ).select("-password");
 
     res.status(200).json({
       success: true,
@@ -156,23 +170,23 @@ export const updateProfile = async (req, res, next) => {
   }
 };
 
+// --- Get All Users ---
 export const getAllUsers = async (req, res, next) => {
-  // Use .lean() for faster read-only performance in large datasets
-  const users = await User.find().select("-password").sort({ createdAt: -1 });
+  try {
+    const users = await User.find().select("-password").sort({ createdAt: -1 });
 
-  if (!users || users.length === 0) {
-    const error = new Error("No users found.");
-    error.statusCode = 404;
-    return next(error);
+    // ✅ Fix 3: never throw 404 — return empty array so frontend renders normally
+    res.status(200).json({
+      success: true,
+      count: users.length,
+      users,
+    });
+  } catch (error) {
+    next(error);
   }
-
-  res.status(200).json({
-    success: true,
-    count: users.length,
-    users,
-  });
 };
 
+// --- Get Donors ---
 export const getDonors = async (req, res, next) => {
   try {
     const [totalDonors, donors] = await Promise.all([
@@ -182,25 +196,21 @@ export const getDonors = async (req, res, next) => {
         .sort({ createdAt: -1 }),
     ]);
 
-    // Check if donors exist
     if (!donors || donors.length === 0) {
       const error = new Error("No donors found in the records.");
       error.statusCode = 404;
       return next(error);
     }
 
-    // Success response
-    res.status(200).json({
-      success: true,
-      count: totalDonors,
-      data: donors,
-    });
+    // const availableDonors = donors.filter((donor) => donor.isAvailable);
+
+    res.status(200).json({ success: true, count: totalDonors, data: donors });
   } catch (err) {
-    // Pass any database or execution errors to the global error handler
     next(err);
   }
 };
 
+// --- Get Volunteers ---
 export const getVolunteers = async (req, res, next) => {
   try {
     const [totalVolunteers, volunteers] = await Promise.all([
@@ -211,22 +221,24 @@ export const getVolunteers = async (req, res, next) => {
     ]);
 
     if (!volunteers || volunteers.length === 0) {
-      const error = new Error("No volunteers found in this record");
+      const error = new Error("No volunteers found in this record.");
       error.statusCode = 404;
       return next(error);
     }
-    res.status(200).json({
-      success: false,
-      count: totalVolunteers,
-      data: volunteers,
-    });
+
+    // ✅ Fix 4: was success: false
+    res
+      .status(200)
+      .json({ success: true, count: totalVolunteers, data: volunteers });
   } catch (error) {
     next(error);
   }
 };
+
+// --- Update User Role ---
 export const updateUserRole = async (req, res, next) => {
   try {
-    const id = req.params.id;
+    const { id } = req.params;
     const { role } = req.body;
 
     const allowedRoles = ["admin", "donor", "volunteer"];
@@ -236,17 +248,16 @@ export const updateUserRole = async (req, res, next) => {
       return next(error);
     }
 
+    if (req.user.role !== "admin") {
+      const error = new Error("Only admins can update user roles.");
+      error.statusCode = 403;
+      return next(error);
+    }
+
     const user = await User.findById(id);
     if (!user) {
       const error = new Error("User no longer exists.");
       error.statusCode = 404;
-      return next(error);
-    }
-
-    const isAdmin = req.user.role === "admin";
-    if (!isAdmin) {
-      const error = new Error("Only admin can update users status.");
-      error.statusCode = 403;
       return next(error);
     }
 
@@ -261,24 +272,20 @@ export const updateUserRole = async (req, res, next) => {
 
     res.status(200).json({
       success: true,
-      message: "User role has been updated successfully.",
-      user: {
-        id: user._id,
-        name: user.name,
-        role: user.role,
-      },
+      message: `User role updated to ${role} successfully.`,
+      user: { id: user._id, name: user.name, role: user.role },
     });
   } catch (error) {
     next(error);
   }
 };
 
+// --- Update User Status ---
 export const updateUserStatus = async (req, res, next) => {
   try {
     const { id } = req.params;
     const { status } = req.body;
 
-    // 1. Validate Input
     const allowedStatuses = ["active", "blocked"];
     if (!allowedStatuses.includes(status)) {
       const error = new Error(
@@ -288,14 +295,12 @@ export const updateUserStatus = async (req, res, next) => {
       return next(error);
     }
 
-    // 2. Authorization Check (Keep this at the top to save DB hits)
     if (req.user.role !== "admin") {
       const error = new Error("Only admins can update user status.");
       error.statusCode = 403;
       return next(error);
     }
 
-    // 3. Find User
     const user = await User.findById(id);
     if (!user) {
       const error = new Error("User no longer exists.");
@@ -303,31 +308,26 @@ export const updateUserStatus = async (req, res, next) => {
       return next(error);
     }
 
-    // 4. Check for Redundant Updates
     if (user.status === status) {
-      const error = new Error(`User status is already ${status}`);
+      const error = new Error(`User status is already ${status}.`);
       error.statusCode = 400;
       return next(error);
     }
 
-    // 5. Update and Save
     user.status = status;
     await user.save();
 
     res.status(200).json({
       success: true,
       message: `User is now ${status}.`,
-      user: {
-        _id: user._id, // Keep underscore to match your frontend map logic
-        name: user.name,
-        status: user.status,
-      },
+      user: { _id: user._id, name: user.name, status: user.status },
     });
   } catch (error) {
     next(error);
   }
 };
 
+// --- Delete User ---
 export const deleteUser = async (req, res, next) => {
   try {
     const { id } = req.params;
@@ -356,24 +356,18 @@ export const deleteUser = async (req, res, next) => {
   }
 };
 
+// --- Dashboard Stats ---
 export const getDashboardStats = async (req, res, next) => {
   try {
-    const [totalUsers] = await Promise.all([
+    const [totalUsers, totalRequests, totalDonations] = await Promise.all([
       User.countDocuments({ status: { $ne: "blocked" } }),
-    ]);
-
-    const [totalRequests, totalDonations] = await Promise.all([
       Request.countDocuments({ type: "request", status: "completed" }),
       Donate.countDocuments({ donorStatus: "donated" }),
     ]);
 
     res.status(200).json({
       success: true,
-      data: {
-        totalUsers,
-        totalRequests,
-        totalDonations,
-      },
+      data: { totalUsers, totalRequests, totalDonations },
     });
   } catch (error) {
     next(error);

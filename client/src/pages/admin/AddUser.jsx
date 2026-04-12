@@ -60,7 +60,7 @@ const AddUser = () => {
 
   return (
     <div className="max-w-2xl mx-auto py-10 px-4 animate-in fade-in duration-500">
-      <div className="bg-[var(--color-surface-card)] shadow-2xl border border-[var(--color-border-default)] rounded-[2.5rem] p-8 md:p-12">
+      <div className="bg-[var(--color-surface-card)] shadow-2xl border border-[var(--color-border-default)] rounded-md p-8 md:p-12">
         <header className="mb-10 text-center">
           <h2 className="text-3xl font-black uppercase tracking-tighter text-[var(--color-content-primary)]">
             Add User

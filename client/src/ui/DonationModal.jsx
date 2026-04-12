@@ -4,7 +4,8 @@ import { X, Clock, MessageSquare, CheckCircle2 } from "lucide-react";
 import Button from "../ui/Button";
 import Input from "../ui/Input";
 import Select from "../ui/Select";
-import { useCreateDonationMutation } from "../redux/features/donationApiSlice";
+import { useCreateDonationMutation } from "../redux/features/donation/donationApi";
+import { toast } from "react-hot-toast";
 
 const DonationModal = ({ isOpen, onClose, selectedRequest }) => {
   const [createDonation, { isSuccess, error }] = useCreateDonationMutation();
@@ -12,10 +13,14 @@ const DonationModal = ({ isOpen, onClose, selectedRequest }) => {
   const handleDonationSubmit = async (data) => {
     try {
       await createDonation({
-        donationData: { ...data, requestId: selectedRequest._id },
+        ...data,
+        requestId: selectedRequest._id,
       }).unwrap();
+      onClose();
     } catch (error) {
-      console.error("Failed to create donation:", error);
+      toast.error(
+        error?.data?.message || "Failed to commit donation. Please try again.",
+      );
     }
   };
   const {

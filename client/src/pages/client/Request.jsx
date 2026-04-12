@@ -77,11 +77,9 @@ const BloodRequests = () => {
           className="grid grid-cols-1 md:grid-cols-3 gap-2"
         >
           <div className="p-3 space-y-1">
-            <label className="text-[9px] font-black uppercase tracking-widest text-[var(--color-content-muted)] flex items-center gap-2">
-              <Droplet size={12} className="text-red-500" /> Blood Group
-            </label>
-            <select
-              className="w-full bg-transparent border-none text-[13px] font-bold focus:ring-0 outline-none p-0 cursor-pointer text-[var(--color-content-primary)]"
+            <Select
+              label="Blood Group"
+              icon={Droplet}
               value={params.bloodGroup}
               onChange={(e) =>
                 setParams({ ...params, bloodGroup: e.target.value })
@@ -93,15 +91,13 @@ const BloodRequests = () => {
                   {g}
                 </option>
               ))}
-            </select>
+            </Select>
           </div>
 
           <div className="p-3 space-y-1 border-t md:border-t-0 md:border-l border-[var(--color-border-default)]">
-            <label className="text-[9px] font-black uppercase tracking-widest text-[var(--color-content-muted)] flex items-center gap-2">
-              <MapPin size={12} /> District
-            </label>
-            <select
-              className="w-full bg-transparent border-none text-[13px] font-bold focus:ring-0 outline-none p-0 cursor-pointer text-[var(--color-content-primary)]"
+            <Select
+              label="District"
+              icon={MapPin}
               value={params.district}
               onChange={(e) =>
                 setParams({ ...params, district: e.target.value })
@@ -113,13 +109,13 @@ const BloodRequests = () => {
                   {d.name}
                 </option>
               ))}
-            </select>
+            </Select>
           </div>
 
           <button
             type="submit"
             disabled={isFetching}
-            className="bg-[var(--color-content-primary)] hover:bg-black text-white rounded-xl flex items-center justify-center gap-2 transition-all active:scale-95 h-full min-h-[50px]"
+            className="flex items-center justify-center gap-2 transition-all bg-primary-600 rounded-md active:scale-95 h-full "
           >
             <Search size={16} strokeWidth={3} />
             <span className="text-[10px] font-black uppercase tracking-[0.2em]">

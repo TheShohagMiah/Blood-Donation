@@ -1,5 +1,6 @@
 import { Router } from "express";
 import {
+  changePassword,
   deleteUser,
   getAllUsers,
   getDashboardStats,
@@ -30,6 +31,8 @@ authRoutes.get(
 );
 authRoutes.patch("/update-profile", isAuthenticated, updateProfile);
 authRoutes.post("/logout", isAuthenticated, logout);
+authRoutes.patch("/update-password", isAuthenticated, changePassword);
+
 authRoutes.get(
   "/stats",
   isAuthenticated,

@@ -33,13 +33,14 @@ import { setCredentials } from "./redux/slices/authSlice";
 import PublicRoute from "./components/PublicRoute";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import DonorSearchPage from "./pages/client/Search";
+import CreateBloodRequestFromDashboard from "./pages/admin/CreateRequest";
+import EditRequest from "./pages/admin/EditRequest";
 
 const App = () => {
   const dispatch = useDispatch();
   const { user } = useSelector((state) => state.auth);
 
   const { data, isLoading, isFetching } = useGetMeQuery();
-
   useEffect(() => {
     if (data?.user) {
       dispatch(setCredentials(data.user));
@@ -141,12 +142,15 @@ const App = () => {
           <Route index element={DynamicDashboard} />
 
           {/* Admin Routes */}
-          <Route element={<ProtectedRoute allowedRoles={["admin"]} />}>
-            <Route path="users" element={<AllUsers />} />
-            <Route path="users/add" element={<AddUser />} />
-          </Route>
+          <Route path="users" element={<AllUsers />} />
+          <Route path="users/add" element={<AddUser />} />
 
           <Route path="donation-requests" element={<AllDonationRequests />} />
+          <Route
+            path="donation-requests/create"
+            element={<CreateBloodRequestFromDashboard />}
+          />
+          <Route path="donation-requests/edit/:id" element={<EditRequest />} />
           <Route path="profile" element={<Profile />} />
         </Route>
 

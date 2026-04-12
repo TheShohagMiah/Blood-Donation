@@ -3,6 +3,7 @@ import {
   createRequest,
   deleteRequest,
   getOwnRequest,
+  getRequestById,
   getRequests,
   updateRequest,
   updateRequestStatus,
@@ -16,6 +17,7 @@ const requestRoutes = Router();
 
 requestRoutes.get("/", getRequests);
 requestRoutes.post("/", isAuthenticated, createRequest);
+requestRoutes.get("/:id", getRequestById);
 requestRoutes.get("/own", isAuthenticated, getOwnRequest);
 requestRoutes.patch(
   "/status/:id",

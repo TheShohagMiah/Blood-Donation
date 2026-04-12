@@ -59,7 +59,7 @@ export const navLinks = [
       {
         id: "new-request",
         name: "New Request",
-        path: "/dashboard/donation-requests/new",
+        path: "/dashboard/donation-requests/create",
         icon: UserPlus,
         roles: ["admin", "donor"],
       },

@@ -18,6 +18,7 @@ import ThemeToggle from "../../ui/ThemeToggle";
 import { toggleSidebar, closeSidebar } from "../../redux/slices/uiSlice";
 import { logout } from "../../redux/slices/authSlice";
 import { useLogoutMutation } from "../../redux/features/isAuth/authApi";
+import { EncryptedText } from "../ui/encrypted-text";
 
 const Navbar = () => {
   const dispatch = useDispatch();
@@ -70,8 +71,8 @@ const Navbar = () => {
       className={`fixed top-0 w-full z-[100] transition-all duration-500 border-b 
       ${
         isScrolled
-          ? "bg-[var(--color-surface-card)]/90 backdrop-blur-xl border-[var(--color-border-default)] py-3 shadow-md"
-          : "bg-transparent border-transparent py-6"
+          ? " backdrop-blur-xl border-[var(--color-border-default)] py-3 shadow-md"
+          : "bg-transparent border-[var(--color-border-default)]  py-6"
       }`}
     >
       <div className="max-w-7xl mx-auto px-6 flex items-center justify-between">
@@ -81,7 +82,12 @@ const Navbar = () => {
             <Droplet size={20} className="text-white fill-current" />
           </div>
           <span className="text-xl font-black uppercase tracking-tighter text-[var(--color-content-primary)]">
-            Life<span className="text-[var(--color-primary-600)]">Flow</span>
+            <EncryptedText
+              text="LifeFlow"
+              encryptedClassName="text-neutral-500"
+              revealedClassName="dark:text-white text-black"
+              revealDelayMs={50}
+            />
           </span>
         </Link>
 

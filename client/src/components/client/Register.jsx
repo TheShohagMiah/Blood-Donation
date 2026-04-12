@@ -14,6 +14,8 @@ import { upazilas } from "../../data/upazilas";
 import Button from "../../ui/Button";
 import { Link, useNavigate } from "react-router-dom";
 import { useRegistrationMutation } from "../../redux/features/isAuth/authApi";
+import { BackgroundGradient } from "../ui/background-gradient";
+import toast from "react-hot-toast";
 // Recommended for professional feedback
 
 const RegisterForm = () => {
@@ -52,18 +54,17 @@ const RegisterForm = () => {
       // Remove confirmPassword before sending to server
       const { confirmPassword, ...submitData } = data;
       await registerUser(submitData).unwrap();
-      reset();
     } catch (err) {
-      console.error(err?.data?.message || "Registration failed");
+      toast.error(err?.data?.message || "Terminal Error: Registration Failed");
     }
   };
 
   return (
-    <div className="max-w-2xl mx-auto py-10 px-4 animate-in fade-in duration-500">
-      <div className="bg-[var(--color-surface-card)] shadow-2xl border border-[var(--color-border-default)] rounded-[2.5rem] p-8 md:p-12">
+    <div className=" flex items-center justify-center bg-surface-main min-h-screen">
+      <BackgroundGradient className="w-full max-w-2xl space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700 bg-surface-primary rounded-xl shadow-[var(--shadow-xl)] border-border-strong p-5 md:p-6">
         <header className="mb-10 text-center">
-          <h2 className="text-3xl font-black uppercase tracking-tighter text-[var(--color-content-primary)]">
-            Create Account
+          <h2 className="text-3xl font-black capitalize tracking-tighter text-[var(--color-content-primary)]">
+            Create an Account
           </h2>
           <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[var(--color-primary-600)] mt-2">
             Secure Terminal Onboarding
@@ -187,7 +188,7 @@ const RegisterForm = () => {
             Sign in <ArrowRight size={12} />
           </Link>
         </p>
-      </div>
+      </BackgroundGradient>
     </div>
   );
 };

@@ -12,6 +12,7 @@ export const bloodRequestApi = createApi({
       }
       return headers;
     },
+    credentials: "include",
   }),
   // Fixed property name: tagTypes (lowercase 't')
   tagTypes: ["BloodRequests"],
@@ -37,6 +38,11 @@ export const bloodRequestApi = createApi({
         };
       },
       invalidatesTags: [{ type: "BloodRequests", id: "LIST" }],
+    }),
+
+    getBloodRequestById: builder.query({
+      query: (id) => `/${id}`,
+      providesTags: (result, error, id) => [{ type: "BloodRequests", id }],
     }),
 
     updateBloodRequest: builder.mutation({
@@ -66,4 +72,5 @@ export const {
   useCreateBloodRequestMutation,
   useUpdateBloodRequestMutation,
   useDeleteBloodRequestMutation,
+  useGetBloodRequestByIdQuery,
 } = bloodRequestApi;

@@ -43,6 +43,14 @@ export const authApi = createApi({
       invalidatesTags: ["User"],
     }),
 
+    updatePassword: builder.mutation({
+      query: (data) => ({
+        url: "/update-password",
+        method: "PATCH",
+        body: data,
+      }),
+      invalidatesTags: ["User"],
+    }),
     getMe: builder.query({
       query: () => "/me",
       // ⚡️ This connects this query to the "User" tag system
@@ -59,13 +67,12 @@ export const authApi = createApi({
     }),
 
     updateStatus: builder.mutation({
-      // Use an object to pass multiple values
       query: ({ id, status }) => ({
         url: `/users/status/${id}`,
         method: "PATCH",
-        // Ensure the key matches 'status' to match your backend 'const { status } = req.body'
         body: { status },
       }),
+      invalidatesTags: ["User"],
     }),
 
     updateRole: builder.mutation({
@@ -74,12 +81,21 @@ export const authApi = createApi({
         method: "PATCH",
         body: { role },
       }),
+      invalidatesTags: ["User"],
     }),
+
     deleteUser: builder.mutation({
       query: (id) => ({
         url: `/users/${id}`,
         method: "DELETE",
       }),
+      invalidatesTags: ["User"],
+    }),
+
+    // Get all donors
+    getDonors: builder.query({
+      query: () => "/donors",
+      providesTags: ["User"],
     }),
   }),
 });
@@ -95,4 +111,6 @@ export const {
   useUpdateStatusMutation,
   useUpdateRoleMutation,
   useDeleteUserMutation,
+  useGetDonorsQuery,
+  useUpdatePasswordMutation,
 } = authApi;

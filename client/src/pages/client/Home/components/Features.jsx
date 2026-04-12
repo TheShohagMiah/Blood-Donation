@@ -43,11 +43,11 @@ const Features = () => {
         {featuresData.map((feature, i) => (
           <div
             key={i}
-            className="card group p-8 lg:p-10 border-border-default hover:border-primary-500 hover:shadow-xl transition-all duration-slow ease-smooth relative overflow-hidden"
+            className="card group p-5 lg:p-8 border-border-default hover:border-primary-500 hover:shadow-xl transition-all duration-slow ease-smooth relative overflow-hidden"
           >
             {/* Top Row: Icon */}
             <div
-              className={`w-14 h-14 rounded-2xl ${feature.bg} ${feature.color} flex items-center justify-center mb-8 transition-transform group-hover:scale-110 group-hover:-rotate-3`}
+              className={`w-14 h-14 rounded-lg ${feature.bg} ${feature.color} flex items-center justify-center mb-8 transition-transform group-hover:scale-110 group-hover:-rotate-3`}
             >
               <feature.icon size={28} strokeWidth={2.5} />
             </div>
@@ -57,7 +57,7 @@ const Features = () => {
               <h4 className="text-xl lg:text-2xl font-bold text-content-primary tracking-tight">
                 {feature.title}
               </h4>
-              <p className="text-sm lg:text-base text-content-secondary leading-relaxed">
+              <p className="text-sm lg:text-base text-content-muted leading-relaxed">
                 {feature.desc}
               </p>
             </div>
@@ -68,7 +68,6 @@ const Features = () => {
             </div>
 
             {/* Background Decoration */}
-            <div className="absolute -bottom-6 -right-6 w-24 h-24 bg-surface-tertiary rounded-full opacity-50 group-hover:scale-150 transition-transform duration-slow" />
           </div>
         ))}
       </div>

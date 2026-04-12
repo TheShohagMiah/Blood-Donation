@@ -1,26 +1,32 @@
 import React, { useEffect } from "react";
-import { NavLink, useLocation } from "react-router-dom";
+import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { ChevronDown, Droplet, LogOut, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { navLinks } from "../../data/navLinks";
-import { useSelector } from "react-redux";
+import { useSelector, useDispatch } from "react-redux";
+import { useLogoutMutation } from "../../redux/features/isAuth/authApi";
+import { logout as logoutAction } from "../../redux/slices/authSlice";
+import { toast } from "react-hot-toast";
+
+const ROLE_BADGE_STYLES = {
+  admin: "bg-purple-50 text-purple-600 border-purple-300",
+  volunteer: "bg-blue-50 text-blue-600 border-blue-300",
+  donor: "bg-emerald-50 text-emerald-600 border-emerald-300",
+};
 
 const getFilteredNav = (links, userRole) => {
-  return (
-    links
-      .filter((link) => link.roles.includes(userRole))
-      .map((link) => {
-        if (link.subMenu) {
-          return {
-            ...link,
-            subMenu: link.subMenu.filter((sub) => sub.roles.includes(userRole)),
-          };
-        }
-        return link;
-      })
-      // Ensure parent categories with empty subMenus (after filtering) are removed
-      .filter((link) => !link.subMenu || link.subMenu.length > 0)
-  );
+  return links
+    .filter((link) => link.roles.includes(userRole))
+    .map((link) => {
+      if (link.subMenu) {
+        return {
+          ...link,
+          subMenu: link.subMenu.filter((sub) => sub.roles.includes(userRole)),
+        };
+      }
+      return link;
+    })
+    .filter((link) => !link.subMenu || link.subMenu.length > 0);
 };
 
 const Sidebar = ({
@@ -29,27 +35,44 @@ const Sidebar = ({
   setIsSubMenuOpen,
   isMobileMenuOpen,
   setIsMobileMenuOpen,
-  userRole,
 }) => {
   const location = useLocation();
+  const navigate = useNavigate();
+  const dispatch = useDispatch();
+  const { user } = useSelector((state) => state.auth);
+  const filteredLinks = getFilteredNav(navLinks, user?.role);
+
+  // ✅ Fix 1: wire up logout
+  const [logoutMutation, { isLoading: isLoggingOut }] = useLogoutMutation();
+
+  const handleLogout = async () => {
+    try {
+      await logoutMutation().unwrap();
+      dispatch(logoutAction());
+      navigate("/login");
+    } catch {
+      toast.error("Failed to log out. Please try again.");
+    }
+  };
 
   const toggleSubMenu = (i) => {
     setIsSubMenuOpen(isSubMenuOpen === i ? null : i);
   };
 
-  const { user } = useSelector((state) => state.auth);
-  const filteredLinks = getFilteredNav(navLinks, user?.role);
-  // ✅ Auto close submenu when collapsed to prevent floating menus
   useEffect(() => {
     if (isCollapsed) setIsSubMenuOpen(null);
   }, [isCollapsed, setIsSubMenuOpen]);
 
-  // ✅ UI Helpers for cleaner JSX
+  // ✅ Fix 3: close mobile menu on navigation
+  const handleNavClick = () => {
+    if (isMobileMenuOpen) setIsMobileMenuOpen(false);
+  };
+
   const activeClass =
     "bg-[var(--color-primary-600)] text-white shadow-md shadow-[var(--color-primary-subtle)]";
   const inactiveClass =
     "text-[var(--color-content-muted)] hover:bg-[var(--color-surface-muted)] hover:text-[var(--color-content-primary)]";
-  const labelStyle = "text-[11px] font-bold uppercase tracking-[0.15em]";
+  const labelStyle = "text-[11px] font-semibold uppercase tracking-[0.15em]";
 
   return (
     <>
@@ -68,8 +91,8 @@ const Sidebar = ({
 
       <aside
         className={`
-          fixed inset-y-0 left-0 z-50 
-          transition-all duration-300 ease-in-out 
+          fixed inset-y-0 left-0 z-50
+          transition-all duration-300 ease-in-out
           border-r border-[var(--color-border-default)] bg-[var(--color-surface-card)]
           ${isCollapsed ? "w-20" : "w-72"}
           ${isMobileMenuOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"}
@@ -79,19 +102,23 @@ const Sidebar = ({
           {/* Header */}
           <div className="flex items-center justify-between h-20 px-6 border-b border-[var(--color-border-default)]">
             <div className="flex items-center gap-3 overflow-hidden">
-              <div className="bg-[var(--color-primary-600)] p-2 rounded-xl group-hover:rotate-[15deg] transition-all duration-300 shadow-lg shadow-red-500/20">
+              <div className="bg-[var(--color-primary-600)] p-2 rounded-xl transition-all duration-300 shadow-lg shadow-red-500/20">
                 <Droplet size={20} className="text-white fill-current" />
               </div>
               {!isCollapsed && (
-                <div className="">
+                <div>
                   <span className="text-xl font-black uppercase tracking-tighter text-[var(--color-content-primary)]">
                     Life
                     <span className="text-[var(--color-primary-600)]">
                       Flow
                     </span>
                   </span>
-
-                  <p className="text-[8px] font-bold bg-primary-50 text-primary-600 px-4 py-1 rounded-lg border border-primary-600 w-fit capitalize">
+                  <p
+                    className={`text-[8px] font-bold px-4 py-1 rounded-lg border w-fit capitalize ${
+                      ROLE_BADGE_STYLES[user?.role] ||
+                      "bg-slate-50 text-slate-600 border-slate-300"
+                    }`}
+                  >
                     {user?.role}
                   </p>
                 </div>
@@ -107,7 +134,7 @@ const Sidebar = ({
           </div>
 
           {/* Navigation */}
-          <nav className="p-4 space-y-2 overflow-y-auto flex-1 custom-scrollbar">
+          <nav className="p-4 space-y-4 overflow-y-auto flex-1 custom-scrollbar">
             {filteredLinks.map((item, i) => {
               const isParentActive = item?.subMenu?.some(
                 (sub) => location.pathname === sub.path,
@@ -115,14 +142,14 @@ const Sidebar = ({
               const isOpen = isSubMenuOpen === i;
 
               return (
-                <div key={i} className="space-y-1">
+                <div key={i} className="space-y-2">
                   {item.subMenu ? (
                     <>
                       <button
                         onClick={() => toggleSubMenu(i)}
                         className={`
-                          w-full flex items-center gap-4 px-3 py-3 rounded-lg transition-all group
-                          ${isParentActive || isOpen ? "text-[var(--color-primary-600)] bg-[var(--color-primary-50)]/50" : inactiveClass}
+                          w-full flex items-center gap-4 px-3 py-2.5 rounded-sm transition-all group
+                          ${isParentActive ? activeClass : inactiveClass}
                         `}
                       >
                         <item.icon size={20} className="shrink-0" />
@@ -149,11 +176,13 @@ const Sidebar = ({
                           >
                             {item.subMenu.map((sub, subIdx) => (
                               <NavLink
+                                end
                                 key={subIdx}
                                 to={sub.path}
+                                onClick={handleNavClick}
                                 className={({ isActive }) => `
-                                  block px-3 py-2 text-[13px] rounded-md transition-all
-                                  ${isActive ? "text-[var(--color-primary-600)] font-bold bg-[var(--color-primary-50)]" : "text-[var(--color-content-muted)] hover:text-[var(--color-content-primary)]"}
+                                  block px-3 py-2.5 text-[13px]  transition-all
+                                  ${isActive ? "text-[var(--color-primary-600)] font-semibold border-l-2 border-primary-700" : "text-[var(--color-content-muted)] hover:text-[var(--color-content-primary)]"}
                                 `}
                               >
                                 {sub.name}
@@ -165,9 +194,11 @@ const Sidebar = ({
                     </>
                   ) : (
                     <NavLink
+                      end
                       to={item.path}
+                      onClick={handleNavClick}
                       className={({ isActive }) => `
-                        flex items-center gap-4 px-3 py-3 rounded-lg transition-all
+                        flex items-center gap-4 px-3 py-2 rounded-sm transition-all
                         ${isActive ? activeClass : inactiveClass}
                       `}
                     >
@@ -182,12 +213,17 @@ const Sidebar = ({
             })}
           </nav>
 
-          {/* Footer Info */}
+          {/* Footer */}
           {!isCollapsed && (
-            <div className=" border-t border-[var(--color-border-default)] p-5">
-              <button className="flex items-center gap-3 bg-red-50 px-4 py-2 rounded-sm font-bold text-sm border border-red-600 text-red-500 w-full">
-                <LogOut />
-                Sign Out
+            <div className="border-t border-[var(--color-border-default)] p-5">
+              {/* ✅ Fix 1: logout actually works now */}
+              <button
+                onClick={handleLogout}
+                disabled={isLoggingOut}
+                className="flex items-center gap-3 bg-red-50 px-4 py-2 rounded-lg font-bold text-sm border border-red-300 text-red-500 w-full hover:bg-red-100 transition-colors disabled:opacity-50"
+              >
+                <LogOut size={18} />
+                {isLoggingOut ? "Signing out..." : "Sign Out"}
               </button>
             </div>
           )}

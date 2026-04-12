@@ -16,7 +16,7 @@ const donateSchema = new mongoose.Schema(
 
     donorStatus: {
       type: String,
-      enum: ["interested", "on-the-way", "arrived", "donated", "canceled"],
+      enum: ["interested", "on-the-way", "arrived", "donated", "cancelled"],
       default: "interested",
     },
 

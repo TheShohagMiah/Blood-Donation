@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo, useCallback } from "react";
+import React, { useState, useMemo, useCallback, useEffect } from "react";
 import {
   MoreHorizontal,
   Trash2,
@@ -8,7 +8,6 @@ import {
   Unlock,
   Users as UsersIcon,
   Search,
-  Filter,
 } from "lucide-react";
 import {
   useDeleteUserMutation,
@@ -18,20 +17,37 @@ import {
 } from "../../redux/features/isAuth/authApi";
 import Loader from "../../ui/Loader";
 import DeleteUserModal from "../../ui/DeleteModal";
+import { toast } from "react-hot-toast";
 
+const ROLE_STYLES = {
+  admin: "bg-purple-100 text-purple-700 border-purple-200",
+  volunteer: "bg-blue-100 text-blue-700 border-blue-200",
+  donor: "bg-emerald-100 text-emerald-700 border-emerald-200",
+};
+const STATUS_STYLES = {
+  active: "text-emerald-600",
+  blocked: "text-red-600",
+};
 const AllUsers = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [filter, setFilter] = useState("all");
   const [activeMenu, setActiveMenu] = useState(null);
   const [deleteTarget, setDeleteTarget] = useState(null);
 
-  // 1. Single Source of Truth from RTK Query
-  const { data, isLoading } = useGetAllUsersQuery();
+  const { data, isLoading, error } = useGetAllUsersQuery();
   const [deleteUser] = useDeleteUserMutation();
   const [updateStatus] = useUpdateStatusMutation();
   const [updateRole] = useUpdateRoleMutation();
 
-  // 2. Scalable Filtering (Memoized)
+  // Close dropdown on outside click
+  useEffect(() => {
+    const handleClickOutside = () => setActiveMenu(null);
+    if (activeMenu !== null) {
+      document.addEventListener("click", handleClickOutside);
+    }
+    return () => document.removeEventListener("click", handleClickOutside);
+  }, [activeMenu]);
+
   const filteredUsers = useMemo(() => {
     const users = data?.users || [];
     return users.filter((user) => {
@@ -43,12 +59,53 @@ const AllUsers = () => {
     });
   }, [data, filter, searchQuery]);
 
-  // 3. Performance: UseCallback for handlers passed to children
   const handleToggleMenu = useCallback((id) => {
     setActiveMenu((prev) => (prev === id ? null : id));
   }, []);
 
+  const handleUpdateRole = useCallback(
+    async ({ id, role }) => {
+      setActiveMenu(null);
+      try {
+        await updateRole({ id, role }).unwrap();
+      } catch (err) {
+        toast.error(err?.data?.message || "Failed to update role.");
+      }
+    },
+    [updateRole],
+  );
+
+  const handleUpdateStatus = useCallback(
+    async ({ id, status }) => {
+      setActiveMenu(null);
+      try {
+        await updateStatus({ id, status }).unwrap();
+      } catch (err) {
+        toast.error(err?.data?.message || "Failed to update status.");
+      }
+    },
+    [updateStatus],
+  );
+
+  const handleDeleteUser = useCallback(
+    async (id) => {
+      setActiveMenu(null);
+      try {
+        await deleteUser(id).unwrap();
+      } catch (err) {
+        toast.error(err?.data?.message || "Failed to delete user.");
+      }
+    },
+    [deleteUser],
+  );
+
   if (isLoading) return <Loader />;
+  if (error)
+    return (
+      <div className="text-red-500 p-8 text-center font-bold uppercase tracking-widest text-sm">
+        {error?.data?.message || error?.status || "Something went wrong."}
+      </div>
+    );
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8 animate-in fade-in duration-500">
@@ -65,7 +122,6 @@ const AllUsers = () => {
           </p>
         </div>
 
-        {/* Scalable Controls: Search + Filter */}
         <div className="flex flex-col sm:flex-row gap-4 items-center">
           <div className="relative w-full sm:w-72">
             <Search
@@ -99,9 +155,9 @@ const AllUsers = () => {
         </div>
       </header>
 
-      {/* Optimized Data Table */}
-      <div className="bg-[var(--color-surface-card)] border border-[var(--color-border-default)] rounded-[var(--radius-2xl)] shadow-sm overflow-hidden">
-        <div className="overflow-x-auto">
+      {/* ✅ Removed overflow-hidden from outer — it was clipping the dropdown */}
+      <div className="bg-[var(--color-surface-card)] border border-[var(--color-border-default)] rounded-[var(--radius-2xl)] shadow-sm">
+        <div className="overflow-x-auto rounded-[var(--radius-2xl)]">
           <table className="w-full text-left border-collapse min-w-[800px]">
             <thead>
               <tr className="bg-[var(--color-surface-muted)]/30 border-b border-[var(--color-border-default)]">
@@ -125,8 +181,8 @@ const AllUsers = () => {
                     user={user}
                     isOpen={activeMenu === user._id}
                     onToggle={() => handleToggleMenu(user._id)}
-                    onUpdateRole={updateRole}
-                    onUpdateStatus={updateStatus}
+                    onUpdateRole={handleUpdateRole}
+                    onUpdateStatus={handleUpdateStatus}
                     onDeleteRequest={() => setDeleteTarget(user)}
                   />
                 ))
@@ -150,8 +206,8 @@ const AllUsers = () => {
           isOpen={!!deleteTarget}
           onClose={() => setDeleteTarget(null)}
           userName={deleteTarget.name}
-          onDelete={async () => {
-            await deleteUser(deleteTarget._id).unwrap();
+          onDelete={() => {
+            handleDeleteUser(deleteTarget._id);
             setDeleteTarget(null);
           }}
         />
@@ -160,9 +216,6 @@ const AllUsers = () => {
   );
 };
 
-/* --- SCALABLE SUB-COMPONENTS --- */
-
-// Use React.memo to prevent unnecessary re-renders of rows when other rows change
 const UserRow = React.memo(
   ({
     user,
@@ -173,7 +226,11 @@ const UserRow = React.memo(
     onDeleteRequest,
   }) => (
     <tr
-      className={`group transition-colors ${isOpen ? "bg-[var(--color-surface-tertiary)]/30" : "hover:bg-[var(--color-surface-tertiary)]/10"}`}
+      className={`group transition-colors ${
+        isOpen
+          ? "bg-[var(--color-surface-tertiary)]/30"
+          : "hover:bg-[var(--color-surface-tertiary)]/10"
+      }`}
     >
       <td className="px-8 py-5">
         <div className="flex items-center gap-4">
@@ -184,102 +241,116 @@ const UserRow = React.memo(
               alt=""
             />
             <div
-              className={`absolute -bottom-1 -right-1 w-3 h-3 border-2 border-[var(--color-surface-card)] rounded-full ${user.status === "active" ? "bg-emerald-500" : "bg-red-500"}`}
+              className={`absolute -bottom-1 -right-1 w-3 h-3 border-2 border-[var(--color-surface-card)] rounded-full ${
+                user.status === "active" ? "bg-emerald-500" : "bg-red-500"
+              }`}
             />
           </div>
           <div className="flex flex-col">
             <span className="text-sm font-bold text-[var(--color-content-primary)] tracking-tight">
               {user.name}
             </span>
-            <span className="text-[10px] text-[var(--color-content-muted)] font-black uppercase tracking-tighter opacity-70">
+            <span className="text-[12px] text-[var(--color-content-muted)]   opacity-70">
               {user.email}
             </span>
           </div>
         </div>
       </td>
       <td className="px-8 py-5">
-        <span className="inline-flex text-[9px] font-black uppercase px-2.5 py-1 rounded-lg bg-[var(--color-surface-muted)] text-[var(--color-content-secondary)] tracking-[0.15em] border border-[var(--color-border-default)]">
+        <span
+          className={`inline-flex text-[9px] font-black uppercase px-2.5 py-1 rounded-lg tracking-[0.15em] border ${
+            ROLE_STYLES[user.role] ||
+            "bg-gray-100 text-gray-700 border-gray-200"
+          }`}
+        >
           {user.role}
         </span>
       </td>
       <td className="px-8 py-5">
         <span
-          className={`text-[9px] font-black uppercase tracking-widest ${user.status === "active" ? "text-emerald-600" : "text-red-600"}`}
+          className={`text-[9px] font-black uppercase tracking-widest ${STATUS_STYLES[user.status] || "text-gray-500"}`}
         >
           {user.status}
         </span>
       </td>
-      <td className="px-8 py-5 text-right relative">
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            onToggle();
-          }}
-          className="p-2 rounded-lg hover:bg-[var(--color-surface-tertiary)] transition-all"
-        >
-          <MoreHorizontal
-            size={20}
-            className="text-[var(--color-content-muted)]"
-          />
-        </button>
+      <td className="px-8 py-5 text-right">
+        <div className="relative inline-block">
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onToggle();
+            }}
+            className="p-2 rounded-lg hover:bg-[var(--color-surface-tertiary)] transition-all"
+          >
+            <MoreHorizontal
+              size={20}
+              className="text-[var(--color-content-muted)]"
+            />
+          </button>
 
-        {isOpen && (
-          <div className="absolute right-8 top-14 w-52 bg-[var(--color-surface-card)] border border-[var(--color-border-default)] rounded-xl shadow-2xl z-50 py-2 animate-in fade-in zoom-in-95 duration-200">
-            <DropdownItem
-              onClick={() =>
-                onUpdateRole({
-                  id: user._id,
-                  role: user.role === "donor" ? "volunteer" : "donor",
-                })
-              }
-              icon={
-                user.role === "donor" ? (
-                  <UserCog size={14} />
-                ) : (
-                  <ShieldCheck size={14} />
-                )
-              }
+          {isOpen && (
+            <div
+              onClick={(e) => e.stopPropagation()}
+              className="absolute right-0 top-full mt-1 w-52 bg-[var(--color-surface-card)] border border-[var(--color-border-default)] rounded-xl shadow-2xl z-50 py-2 animate-in fade-in zoom-in-95 duration-200"
             >
-              MAKE {user.role === "donor" ? "VOLUNTEER" : "DONOR"}
-            </DropdownItem>
-            {user.role !== "admin" && (
               <DropdownItem
-                onClick={() => onUpdateRole({ id: user._id, role: "admin" })}
-                icon={<ShieldCheck size={14} />}
+                onClick={() =>
+                  onUpdateRole({
+                    id: user._id,
+                    role: user.role === "donor" ? "volunteer" : "donor",
+                  })
+                }
+                icon={
+                  user.role === "donor" ? (
+                    <UserCog size={14} />
+                  ) : (
+                    <ShieldCheck size={14} />
+                  )
+                }
               >
-                MAKE ADMIN
+                MAKE {user.role === "donor" ? "VOLUNTEER" : "DONOR"}
               </DropdownItem>
-            )}
-            <div className="my-1 border-t border-[var(--color-border-default)]" />
-            <DropdownItem
-              onClick={() =>
-                onUpdateStatus({
-                  id: user._id,
-                  status: user.status === "active" ? "blocked" : "active",
-                })
-              }
-              icon={
-                user.status === "active" ? (
-                  <Ban size={14} />
-                ) : (
-                  <Unlock size={14} />
-                )
-              }
-              className={
-                user.status === "active" ? "text-amber-600" : "text-emerald-600"
-              }
-            >
-              {user.status === "active" ? "BLOCK USER" : "UNBLOCK USER"}
-            </DropdownItem>
-            <DropdownItem
-              onClick={onDeleteRequest}
-              icon={<Trash2 size={14} />}
-              className="text-red-600 hover:bg-red-50"
-            >
-              DELETE USER
-            </DropdownItem>
-          </div>
-        )}
+              {user.role !== "admin" && (
+                <DropdownItem
+                  onClick={() => onUpdateRole({ id: user._id, role: "admin" })}
+                  icon={<ShieldCheck size={14} />}
+                >
+                  MAKE ADMIN
+                </DropdownItem>
+              )}
+              <div className="my-1 border-t border-[var(--color-border-default)]" />
+              <DropdownItem
+                onClick={() =>
+                  onUpdateStatus({
+                    id: user._id,
+                    status: user.status === "active" ? "blocked" : "active",
+                  })
+                }
+                icon={
+                  user.status === "active" ? (
+                    <Ban size={14} />
+                  ) : (
+                    <Unlock size={14} />
+                  )
+                }
+                className={
+                  user.status === "active"
+                    ? "text-amber-600"
+                    : "text-emerald-600"
+                }
+              >
+                {user.status === "active" ? "BLOCK USER" : "UNBLOCK USER"}
+              </DropdownItem>
+              <DropdownItem
+                onClick={onDeleteRequest}
+                icon={<Trash2 size={14} />}
+                className="text-red-600 hover:bg-red-50"
+              >
+                DELETE USER
+              </DropdownItem>
+            </div>
+          )}
+        </div>
       </td>
     </tr>
   ),

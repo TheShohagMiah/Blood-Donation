@@ -27,13 +27,13 @@ const Select = React.forwardRef(
             ref={ref}
             {...props}
             className={`
-            w-full h-11 px-4 
+            w-full h-10 px-4 
             ${Icon ? "pl-11" : "pl-4"}
             pr-10
             bg-[var(--color-surface-card)] 
             border border-[var(--color-border-default)] 
-            rounded-[var(--radius-lg)] 
-            text-sm text-[var(--color-content-primary)] 
+            rounded-[var(--radius-md)] 
+            text-sm font-normal text-[var(--color-content-primary)] 
             appearance-none
             transition-all duration-200
             hover:border-[var(--color-border-strong)]

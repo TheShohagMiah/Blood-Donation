@@ -1,7 +1,9 @@
-import React from "react";
+import React, { useState } from "react";
 
 const Input = React.forwardRef(
-  ({ label, error, icon: Icon, className = "", ...props }, ref) => {
+  ({ label, type, error, icon: Icon, className = "", ...props }, ref) => {
+    const [isPasswordVisible, setPasswordVisible] = useState(false);
+
     return (
       <div className="w-full space-y-1 animate-in fade-in duration-300">
         {/* Label: Small, Bold, Uppercase for maximum readability */}
@@ -23,15 +25,22 @@ const Input = React.forwardRef(
           )}
 
           <input
+            type={
+              type === "password"
+                ? isPasswordVisible
+                  ? "text"
+                  : "password"
+                : type
+            }
             ref={ref}
             {...props}
             className={`
-            w-full h-11 px-4 
+            w-full h-10 px-4 
             ${Icon ? "pl-11" : "pl-4"}
             bg-[var(--color-surface-card)] 
             border border-[var(--color-border-default)] 
-            rounded-[var(--radius-lg)] 
-            text-sm text-[var(--color-content-primary)] 
+            rounded-[var(--radius-md)] 
+            text-sm font-normal text-[var(--color-content-primary)] 
             placeholder:text-[var(--color-content-muted)]/50
             transition-all duration-200
             hover:border-[var(--color-border-strong)]
@@ -41,6 +50,14 @@ const Input = React.forwardRef(
             ${className}
           `}
           />
+          {type === "password" && (
+            <span
+              onClick={() => setPasswordVisible((v) => !v)} // ✅ toggle here, not on input
+              className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[var(--color-content-muted)] cursor-pointer select-none"
+            >
+              {isPasswordVisible ? "👁" : "👁‍🗨"}
+            </span>
+          )}
         </div>
 
         {/* Error Message with micro-typography */}

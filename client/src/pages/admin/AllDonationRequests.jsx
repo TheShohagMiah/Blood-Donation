@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Edit3,
   ExternalLink,
@@ -9,11 +9,33 @@ import {
   Clock,
   Droplets,
 } from "lucide-react";
-import { useGetBloodRequestsQuery } from "../../redux/features/bloodRequest/bloodRequestApi";
+import {
+  useGetBloodRequestsQuery,
+  useDeleteBloodRequestMutation,
+} from "../../redux/features/bloodRequest/bloodRequestApi";
 import RequestViewModal from "../../ui/RequestViewModal";
 import DeleteUserModal from "../../ui/DeleteModal";
 import Loader from "../../ui/Loader";
+import { toast } from "react-hot-toast";
+import { Navigate } from "react-router-dom";
 
+const formatDate = (dateStr) => {
+  if (!dateStr) return "N/A";
+  return new Date(dateStr).toLocaleDateString("en-US", {
+    month: "short",
+    day: "2-digit",
+    year: "numeric",
+  });
+};
+
+const formatTime = (timeStr) => {
+  if (!timeStr) return "N/A";
+  const [hours, minutes] = timeStr.split(":");
+  const h = parseInt(hours, 10);
+  const ampm = h >= 12 ? "PM" : "AM";
+  const hour12 = h % 12 || 12;
+  return `${hour12}:${minutes} ${ampm}`;
+};
 const getStatusStyles = (status) => {
   switch (status) {
     case "Completed":
@@ -27,10 +49,6 @@ const getStatusStyles = (status) => {
   }
 };
 
-/**
- * Robust helper to extract a string name from the requester field.
- * Prevents "Objects are not valid as a React child" errors.
- */
 const getRequesterName = (requester) => {
   if (!requester) return "Unknown User";
   if (typeof requester === "object") return requester.name || "Anonymous";
@@ -40,11 +58,27 @@ const getRequesterName = (requester) => {
 const AllDonationRequests = () => {
   const [viewData, setViewData] = useState(null);
   const [deleteModal, setDeleteModal] = useState(null);
+  const [editModal, setEditModal] = useState(null);
+
   const {
     data: bloodRequests,
     isLoading,
     isError,
+    error,
   } = useGetBloodRequestsQuery();
+
+  // ✅ Fix 2: actually call delete mutation
+  const [deleteBloodRequest] = useDeleteBloodRequestMutation();
+
+  const handleDelete = async () => {
+    try {
+      await deleteBloodRequest(deleteModal._id).unwrap();
+      toast.success("Request deleted successfully.");
+      setDeleteModal(null);
+    } catch (err) {
+      toast.error(err?.data?.message || "Failed to delete request.");
+    }
+  };
 
   if (isLoading) return <Loader />;
 
@@ -52,7 +86,7 @@ const AllDonationRequests = () => {
     return (
       <div className="max-w-7xl mx-auto px-4 py-20 text-center">
         <h2 className="text-xl font-bold text-red-600 uppercase tracking-widest">
-          Failed to load donation requests
+          {error?.data?.message || "Failed to load donation requests."}
         </h2>
       </div>
     );
@@ -76,66 +110,87 @@ const AllDonationRequests = () => {
         </div>
       </header>
 
-      {/* Mobile/Tablet Card View */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 lg:hidden">
-        {donationRequestData.map((item) => (
-          <RequestMobileCard
-            key={item._id}
-            item={item}
-            onView={() => setViewData(item)}
-            onDelete={() => setDeleteModal(item)}
+      {/* ✅ Fix 3: empty state */}
+      {donationRequestData.length === 0 ? (
+        <div className="bg-[var(--color-surface-card)] border border-[var(--color-border-default)] rounded-[var(--radius-2xl)] py-20 text-center">
+          <Droplets
+            size={40}
+            className="mx-auto text-[var(--color-content-muted)] mb-4 opacity-30"
           />
-        ))}
-      </div>
-
-      {/* Desktop Table View */}
-      <div className="hidden lg:block bg-[var(--color-surface-card)] rounded-[var(--radius-2xl)] border border-[var(--color-border-default)] shadow-sm overflow-hidden">
-        <table className="w-full text-left border-collapse">
-          <thead>
-            <tr className="bg-[var(--color-surface-muted)]/30 border-b border-[var(--color-border-default)]">
-              <th className="px-8 py-5 text-[10px] font-black uppercase tracking-[0.2em] text-[var(--color-content-muted)]">
-                Recipient
-              </th>
-              <th className="px-8 py-5 text-[10px] font-black uppercase tracking-[0.2em] text-[var(--color-content-muted)]">
-                Location
-              </th>
-              <th className="px-8 py-5 text-[10px] font-black uppercase tracking-[0.2em] text-[var(--color-content-muted)] text-center">
-                Group
-              </th>
-              <th className="px-8 py-5 text-[10px] font-black uppercase tracking-[0.2em] text-[var(--color-content-muted)]">
-                Schedule
-              </th>
-              <th className="px-8 py-5 text-[10px] font-black uppercase tracking-[0.2em] text-[var(--color-content-muted)]">
-                Status
-              </th>
-              <th className="px-8 py-5 text-right"></th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-[var(--color-border-default)]">
+          <p className="text-[11px] font-black uppercase tracking-[0.2em] text-[var(--color-content-muted)]">
+            No blood requests found.
+          </p>
+        </div>
+      ) : (
+        <>
+          {/* Mobile/Tablet Card View */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 lg:hidden">
             {donationRequestData.map((item) => (
-              <RequestTableRow
+              <RequestMobileCard
                 key={item._id}
                 item={item}
                 onView={() => setViewData(item)}
+                onEdit={() => setEditModal(item)}
                 onDelete={() => setDeleteModal(item)}
               />
             ))}
-          </tbody>
-        </table>
-      </div>
+          </div>
+
+          {/* Desktop Table View */}
+          <div className="hidden lg:block bg-[var(--color-surface-card)] rounded-[var(--radius-2xl)] border border-[var(--color-border-default)] shadow-sm overflow-hidden">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="bg-[var(--color-surface-muted)]/30 border-b border-[var(--color-border-default)]">
+                  <th className="px-8 py-5 text-[10px] font-black uppercase tracking-[0.2em] text-[var(--color-content-muted)]">
+                    Recipient
+                  </th>
+                  <th className="px-8 py-5 text-[10px] font-black uppercase tracking-[0.2em] text-[var(--color-content-muted)]">
+                    Location
+                  </th>
+                  <th className="px-8 py-5 text-[10px] font-black uppercase tracking-[0.2em] text-[var(--color-content-muted)] text-center">
+                    Group
+                  </th>
+                  <th className="px-8 py-5 text-[10px] font-black uppercase tracking-[0.2em] text-[var(--color-content-muted)]">
+                    Schedule
+                  </th>
+                  <th className="px-8 py-5 text-[10px] font-black uppercase tracking-[0.2em] text-[var(--color-content-muted)]">
+                    Status
+                  </th>
+                  <th className="px-8 py-5 text-right"></th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-[var(--color-border-default)]">
+                {donationRequestData.map((item) => (
+                  <RequestTableRow
+                    key={item._id}
+                    item={item}
+                    onView={() => setViewData(item)}
+                    onEdit={() => setEditModal(item)}
+                    onDelete={() => setDeleteModal(item)}
+                  />
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </>
+      )}
 
       {/* Modals */}
       {viewData && (
         <RequestViewModal data={viewData} onClose={() => setViewData(null)} />
       )}
 
+      {/* ✅ Fix 4: editModal placeholder — swap with your real edit modal */}
+      {editModal && (
+        <Navigate to={`/dashboard/donation-requests/edit/${editModal._id}`} />
+      )}
+
       {deleteModal && (
         <DeleteUserModal
           isOpen={!!deleteModal}
           onClose={() => setDeleteModal(null)}
-          // Ensure we pass a STRING, not the requester object
           userName={`Request for ${deleteModal.recipientName}`}
-          onDelete={() => setDeleteModal(null)}
+          onDelete={handleDelete} // ✅ Fix 5: was just closing modal, now calls API
         />
       )}
     </div>
@@ -144,7 +199,7 @@ const AllDonationRequests = () => {
 
 /* --- SUB-COMPONENTS --- */
 
-const ActionDropdown = ({ onView, onDelete }) => {
+const ActionDropdown = ({ onView, onEdit, onDelete }) => {
   const [isOpen, setIsOpen] = useState(false);
 
   useEffect(() => {
@@ -166,19 +221,35 @@ const ActionDropdown = ({ onView, onDelete }) => {
       </button>
 
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-52 bg-[var(--color-surface-card)] border border-[var(--color-border-default)] rounded-xl shadow-2xl z-50 py-2 animate-in fade-in zoom-in-95 duration-200">
+        <div
+          onClick={(e) => e.stopPropagation()}
+          className="absolute right-0 mt-2 w-52 bg-[var(--color-surface-card)] border border-[var(--color-border-default)] rounded-xl shadow-2xl z-50 py-2 animate-in fade-in zoom-in-95 duration-200"
+        >
           <button
-            onClick={onView}
+            onClick={() => {
+              onView();
+              setIsOpen(false);
+            }}
             className="w-full px-4 py-2.5 text-left text-[11px] font-black uppercase tracking-widest hover:bg-[var(--color-surface-muted)] flex items-center gap-3"
           >
             <ExternalLink size={16} /> View Details
           </button>
-          <button className="w-full px-4 py-2.5 text-left text-[11px] font-black uppercase tracking-widest hover:bg-[var(--color-surface-muted)] flex items-center gap-3">
+          {/* ✅ Fix 6: Edit now calls onEdit instead of doing nothing */}
+          <button
+            onClick={() => {
+              onEdit();
+              setIsOpen(false);
+            }}
+            className="w-full px-4 py-2.5 text-left text-[11px] font-black uppercase tracking-widest hover:bg-[var(--color-surface-muted)] flex items-center gap-3"
+          >
             <Edit3 size={16} /> Edit Request
           </button>
           <div className="my-1 border-t border-[var(--color-border-default)]" />
           <button
-            onClick={onDelete}
+            onClick={() => {
+              onDelete();
+              setIsOpen(false);
+            }}
             className="w-full px-4 py-2.5 text-left text-[11px] font-black uppercase tracking-widest text-red-600 hover:bg-red-50 flex items-center gap-3"
           >
             <Trash2 size={16} /> Delete
@@ -189,7 +260,7 @@ const ActionDropdown = ({ onView, onDelete }) => {
   );
 };
 
-const RequestTableRow = ({ item, onView, onDelete }) => (
+const RequestTableRow = ({ item, onView, onEdit, onDelete }) => (
   <tr className="hover:bg-[var(--color-surface-tertiary)]/20 transition-colors">
     <td className="px-8 py-5">
       <div className="flex flex-col">
@@ -219,10 +290,10 @@ const RequestTableRow = ({ item, onView, onDelete }) => (
     <td className="px-8 py-5">
       <div className="flex flex-col tabular-nums">
         <span className="text-xs font-bold text-[var(--color-content-primary)]">
-          {item.donationDate}
+          {formatDate(item.donationDate)}
         </span>
         <span className="text-[10px] text-[var(--color-content-muted)] flex items-center gap-1 font-bold">
-          <Clock size={12} /> {item.donationTime}
+          <Clock size={12} /> {formatTime(item.donationTime)}
         </span>
       </div>
     </td>
@@ -234,12 +305,12 @@ const RequestTableRow = ({ item, onView, onDelete }) => (
       </span>
     </td>
     <td className="px-8 py-5 text-right">
-      <ActionDropdown onView={onView} onDelete={onDelete} />
+      <ActionDropdown onView={onView} onEdit={onEdit} onDelete={onDelete} />
     </td>
   </tr>
 );
 
-const RequestMobileCard = ({ item, onView, onDelete }) => (
+const RequestMobileCard = ({ item, onView, onEdit, onDelete }) => (
   <div className="bg-[var(--color-surface-card)] p-6 rounded-2xl border border-[var(--color-border-default)] shadow-sm space-y-4">
     <div className="flex justify-between items-start">
       <div className="space-y-1">
@@ -269,7 +340,7 @@ const RequestMobileCard = ({ item, onView, onDelete }) => (
           <Calendar size={10} /> Schedule
         </span>
         <span className="text-xs font-bold text-[var(--color-content-primary)]">
-          {item.donationDate}
+          {formatDate(item.donationDate)}
         </span>
       </div>
     </div>
@@ -280,7 +351,7 @@ const RequestMobileCard = ({ item, onView, onDelete }) => (
       >
         {item.status}
       </span>
-      <ActionDropdown onView={onView} onDelete={onDelete} />
+      <ActionDropdown onView={onView} onEdit={onEdit} onDelete={onDelete} />
     </div>
   </div>
 );

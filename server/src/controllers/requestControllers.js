@@ -1,4 +1,5 @@
 import Request from "../models/request.js";
+
 export const createRequest = async (req, res, next) => {
   try {
     const request = await Request.create({
@@ -69,6 +70,27 @@ export const getRequests = async (req, res, next) => {
   }
 };
 
+export const getRequestById = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const request = await Request.findById(id).populate(
+      "requester",
+      "name email contactNumber",
+    );
+    if (!request) {
+      const error = new Error("Request not found.");
+      error.statusCode = 404;
+      return next(error);
+    }
+    res.status(200).json({
+      success: true,
+      data: request,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 export const getOwnRequest = async (req, res, next) => {
   try {
     const userId = req.user.id;
@@ -116,7 +138,7 @@ export const updateRequest = async (req, res, next) => {
     res.status(200).json({
       success: true,
       message: "Request updated successfully.",
-      updatedData,
+      data: updatedData,
     });
   } catch (error) {
     next(error);
@@ -159,7 +181,7 @@ export const updateRequestStatus = async (req, res, next) => {
     const { id } = req.params;
     const { status } = req.body;
 
-    const allowedStatuses = ["pending", "inprogress", "done", "canceled"];
+    const allowedStatuses = ["pending", "inprogress", "done", "cancelled"];
     if (!allowedStatuses.includes(status)) {
       const error = new Error("Invalid status value.");
       error.statusCode = 400;
