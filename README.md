@@ -46,91 +46,6 @@ BloodDonation/
 |-- README.md
 ```
 
-## Getting Started
-
-### 1. Clone the repository
-
-```bash
-git clone <your-repository-url>
-cd BloodDonation
-```
-
-### 2. Install dependencies
-
-Install frontend dependencies:
-
-```bash
-cd client
-npm install
-```
-
-Install backend dependencies:
-
-```bash
-cd ../server
-npm install
-```
-
-## Environment Variables
-
-Create a `.env` file inside the `server` folder and add the following variables:
-
-```env
-PORT=5000
-NODE_ENV=development
-MONGODB_URI=your_mongodb_connection_string
-JWT_SECRET=your_jwt_secret
-CLIENT_URL=http://localhost:5173
-
-CLOUDINARY_CLOUD_NAME=your_cloudinary_cloud_name
-CLOUDINARY_API_KEY=your_cloudinary_api_key
-CLOUDINARY_SECRET_KEY=your_cloudinary_secret_key
-```
-
-## Run Locally
-
-### Start the backend
-
-From the `server` folder:
-
-```bash
-npm run dev
-```
-
-The backend runs on:
-
-```text
-http://localhost:5000
-```
-
-### Start the frontend
-
-From the `client` folder:
-
-```bash
-npm run dev
-```
-
-The frontend runs on:
-
-```text
-http://localhost:5173
-```
-
-## Available Scripts
-
-### Client
-
-- `npm run dev` - Start the Vite development server
-- `npm run build` - Build the frontend for production
-- `npm run preview` - Preview the production build
-- `npm run lint` - Run ESLint
-
-### Server
-
-- `npm run dev` - Start the backend with nodemon
-- `npm start` - Start the backend with Node.js
-
 ## Main User Flows
 
 - Register as a donor
@@ -153,6 +68,10 @@ Main route groups:
 - `/api/auth`
 - `/api/requests`
 - `/api/donations`
+
+=======
+
+> > > > > > > 4c71af19148922cf8ec4138a2dfee269475d17b1
 
 ## GitHub Description Suggestion
 
