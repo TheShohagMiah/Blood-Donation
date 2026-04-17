@@ -5,7 +5,7 @@ import Request from "../models/request.js";
 
 // --- Registration ---
 export const registration = async (req, res, next) => {
-  const { name, email, password, district, upazila, role, bloodGroup } =
+  const { name, email, password, avatar, district, upazila, role, bloodGroup } =
     req.body;
 
   const existingUser = await User.findOne({ email });
@@ -13,6 +13,10 @@ export const registration = async (req, res, next) => {
     const error = new Error("User with this email already exists.");
     error.statusCode = 400;
     return next(error);
+  }
+
+  if (req?.file) {
+    avatar = req.file.path; // Save the file path to the avatar field
   }
 
   const user = await User.create({
@@ -23,6 +27,7 @@ export const registration = async (req, res, next) => {
     upazila,
     bloodGroup,
     role,
+    avatar,
   });
 
   res.status(201).json({
@@ -173,13 +178,24 @@ export const updateProfile = async (req, res, next) => {
 // --- Get All Users ---
 export const getAllUsers = async (req, res, next) => {
   try {
-    const users = await User.find().select("-password").sort({ createdAt: -1 });
+    const { page = 1, limit = 5 } = req.query;
+    const skip = (page - 1) * limit;
+    const [totalUsers, users] = await Promise.all([
+      User.countDocuments(),
+      User.find({ role: { $ne: "admin" } })
+        .select("-password")
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit),
+    ]);
 
     // ✅ Fix 3: never throw 404 — return empty array so frontend renders normally
     res.status(200).json({
       success: true,
-      count: users.length,
-      users,
+      count: totalUsers,
+      page: Number(page),
+      totalPages: Math.ceil(totalUsers / limit),
+      data: users,
     });
   } catch (error) {
     next(error);
@@ -361,8 +377,8 @@ export const getDashboardStats = async (req, res, next) => {
   try {
     const [totalUsers, totalRequests, totalDonations] = await Promise.all([
       User.countDocuments({ status: { $ne: "blocked" } }),
-      Request.countDocuments({ type: "request", status: "completed" }),
-      Donate.countDocuments({ donorStatus: "donated" }),
+      Request.countDocuments(),
+      Donate.countDocuments({ status: "done" }),
     ]);
 
     res.status(200).json({

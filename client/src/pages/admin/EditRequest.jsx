@@ -25,6 +25,7 @@ import {
 
 const EditRequest = () => {
   const { id } = useParams();
+  console.log(useParams);
   const navigate = useNavigate();
 
   const { data: existingData, isLoading } = useGetBloodRequestByIdQuery(id);
@@ -60,7 +61,6 @@ const EditRequest = () => {
   const onSubmit = async (data) => {
     try {
       await updateRequest({ id, data }).unwrap();
-      toast.success("Request updated successfully!");
       navigate(-1);
     } catch (err) {
       toast.error(err?.data?.message || "Failed to update request.");

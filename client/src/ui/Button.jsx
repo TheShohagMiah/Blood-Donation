@@ -30,7 +30,7 @@ const Button = ({
       type={type}
       onClick={onClick}
       disabled={disabled || isLoading}
-      className={`${baseStyles} ${variants[variant]} ${className} px-5 h-10`}
+      className={`${baseStyles} ${variants[variant]} ${className} px-6 h-10`}
     >
       {isLoading ? (
         <Loader2 className="w-4 h-4 animate-spin" />

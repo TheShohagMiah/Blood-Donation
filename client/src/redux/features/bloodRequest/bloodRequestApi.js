@@ -22,27 +22,44 @@ export const bloodRequestApi = createApi({
       query: () => "/",
     }),
 
-    // Public Creation with Protection
-    createBloodRequest: builder.mutation({
-      query: (requestData) => {
-        // Honeypot Check: If the hidden 'website' field is filled, it's a bot.
-        // You should add an invisible input named 'website' in your CreateBloodRequest form.
-        if (requestData.website) {
-          throw new Error("Bot detected");
-        }
+    getPendingRequests: builder.query({
+      query: () => "/pending",
+    }),
 
-        return {
-          url: "/",
-          method: "POST",
-          body: requestData,
-        };
+    // // Public Creation with Protection
+    // createBloodRequest: builder.mutation({
+    //   query: (requestData) => {
+    //     // Honeypot Check: If the hidden 'website' field is filled, it's a bot.
+    //     // You should add an invisible input named 'website' in your CreateBloodRequest form.
+    //     if (requestData.website) {
+    //       throw new Error("Bot detected");
+    //     }
+
+    //     return {
+    //       url: "/",
+    //       method: "POST",
+    //       body: requestData,
+    //     };
+    //   },
+    //   invalidatesTags: [{ type: "BloodRequests", id: "LIST" }],
+    // }),
+
+    createBloodRequest: builder.mutation({
+      queryFn: async (requestData, _api, _extraOptions, baseQuery) => {
+        if (requestData.website) {
+          return { error: { status: "CUSTOM_ERROR", error: "Bot detected" } };
+        }
+        return baseQuery({ url: "/", method: "POST", body: requestData });
       },
       invalidatesTags: [{ type: "BloodRequests", id: "LIST" }],
     }),
 
     getBloodRequestById: builder.query({
       query: (id) => `/${id}`,
-      providesTags: (result, error, id) => [{ type: "BloodRequests", id }],
+    }),
+
+    getOwnBloodRequests: builder.query({
+      query: () => "/my-requests",
     }),
 
     updateBloodRequest: builder.mutation({
@@ -69,8 +86,10 @@ export const bloodRequestApi = createApi({
 
 export const {
   useGetBloodRequestsQuery,
+  useGetPendingRequestsQuery,
   useCreateBloodRequestMutation,
   useUpdateBloodRequestMutation,
   useDeleteBloodRequestMutation,
   useGetBloodRequestByIdQuery,
+  useGetOwnBloodRequestsQuery,
 } = bloodRequestApi;

@@ -31,6 +31,13 @@ export const createDonation = async (req, res, next) => {
       return next(error);
     }
 
+    // check blood group compatibility
+    if (donor.bloodGroup !== bloodRequest.bloodGroup) {
+      const error = new Error("Your blood group does not match the request.");
+      error.statusCode = 400;
+      return next(error);
+    }
+
     // 90-day cooldown protocol
     if (donor.lastDonationDate) {
       const diffInDays = Math.floor(

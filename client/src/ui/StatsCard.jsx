@@ -3,8 +3,8 @@ import { HelpCircle } from "lucide-react";
 
 const StatsCard = ({ icon: Icon = HelpCircle, label, value }) => {
   return (
-    <div className="flex flex-col bg-surface-card hover:shadow-lg transition-all p-6 border border-border-strong rounded-xl">
-      <div className="bg-purple-100 w-12 h-12 flex items-center justify-center text-primary-600 rounded-lg mb-6">
+    <div className="flex flex-col bg-surface-card transition-all p-6 border border-border-default rounded-md shadow-md">
+      <div className="bg-red-200 w-12 h-12 flex items-center justify-center text-primary-700 rounded-lg mb-6">
         <Icon size={20} strokeWidth={2} />
       </div>
       <div className="flex flex-col gap-1">

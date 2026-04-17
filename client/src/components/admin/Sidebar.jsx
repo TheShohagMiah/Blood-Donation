@@ -91,30 +91,33 @@ const Sidebar = ({
 
       <aside
         className={`
-          fixed inset-y-0 left-0 z-50
-          transition-all duration-300 ease-in-out
-          border-r border-[var(--color-border-default)] bg-[var(--color-surface-card)]
-          ${isCollapsed ? "w-20" : "w-72"}
-          ${isMobileMenuOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"}
-        `}
+    fixed inset-y-0 left-0 z-50
+    flex flex-col
+    transition-transform duration-300 ease-in-out
+    border-r border-[var(--color-border-default)] bg-[var(--color-surface-card)]
+    ${isCollapsed ? "w-20" : "w-72"}
+    ${isMobileMenuOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"}
+  `}
       >
-        <div className="flex flex-col h-full">
-          {/* Header */}
-          <div className="flex items-center justify-between h-20 px-6 border-b border-[var(--color-border-default)]">
-            <div className="flex items-center gap-3 overflow-hidden">
-              <div className="bg-[var(--color-primary-600)] p-2 rounded-xl transition-all duration-300 shadow-lg shadow-red-500/20">
+        <div className="flex flex-col h-full min-h-0">
+          {/* HEADER */}
+          <div className="flex items-center justify-between h-20 px-4 md:px-6 border-b border-[var(--color-border-default)]">
+            <div className="flex items-center gap-3 overflow-hidden min-w-0">
+              <div className="bg-[var(--color-primary-600)] p-2 rounded-xl shadow-lg shadow-red-500/20 shrink-0">
                 <Droplet size={20} className="text-white fill-current" />
               </div>
+
               {!isCollapsed && (
-                <div>
-                  <span className="text-xl font-black uppercase tracking-tighter text-[var(--color-content-primary)]">
-                    Life
+                <div className="min-w-0">
+                  <span className="text-xl font-black uppercase tracking-tighter text-[var(--color-content-primary)] block truncate">
+                    Life{" "}
                     <span className="text-[var(--color-primary-600)]">
                       Flow
                     </span>
                   </span>
+
                   <p
-                    className={`text-[8px] font-bold px-4 py-1 rounded-lg border w-fit capitalize ${
+                    className={`text-[8px] font-bold px-3 py-1 rounded-lg border w-fit capitalize mt-1 ${
                       ROLE_BADGE_STYLES[user?.role] ||
                       "bg-slate-50 text-slate-600 border-slate-300"
                     }`}
@@ -133,46 +136,56 @@ const Sidebar = ({
             </button>
           </div>
 
-          {/* Navigation */}
-          <nav className="p-4 space-y-4 overflow-y-auto flex-1 custom-scrollbar">
+          {/* NAVIGATION */}
+          <nav className="p-3 md:p-4 space-y-3 overflow-y-auto flex-1 min-h-0 custom-scrollbar">
             {filteredLinks.map((item, i) => {
               const isParentActive = item?.subMenu?.some(
                 (sub) => location.pathname === sub.path,
               );
+
               const isOpen = isSubMenuOpen === i;
 
               return (
-                <div key={i} className="space-y-2">
+                <div key={i} className="space-y-1">
+                  {/* PARENT ITEM */}
                   {item.subMenu ? (
                     <>
                       <button
                         onClick={() => toggleSubMenu(i)}
                         className={`
-                          w-full flex items-center gap-4 px-3 py-2.5 rounded-sm transition-all group
-                          ${isParentActive ? activeClass : inactiveClass}
-                        `}
+                    w-full flex items-center gap-4 px-3 py-2.5 rounded-sm
+                    transition-all
+                    ${isParentActive ? activeClass : inactiveClass}
+                  `}
                       >
                         <item.icon size={20} className="shrink-0" />
+
                         {!isCollapsed && (
                           <>
-                            <span className={`${labelStyle} flex-1 text-left`}>
+                            <span
+                              className={`${labelStyle} flex-1 text-left truncate`}
+                            >
                               {item.name}
                             </span>
+
                             <ChevronDown
                               size={14}
-                              className={`transition-transform duration-300 ${isOpen ? "rotate-180" : ""}`}
+                              className={`transition-transform duration-300 ${
+                                isOpen ? "rotate-180" : ""
+                              }`}
                             />
                           </>
                         )}
                       </button>
 
+                      {/* SUBMENU */}
                       <AnimatePresence>
                         {isOpen && !isCollapsed && (
                           <motion.div
                             initial={{ height: 0, opacity: 0 }}
                             animate={{ height: "auto", opacity: 1 }}
                             exit={{ height: 0, opacity: 0 }}
-                            className="overflow-hidden ml-5 border-l border-[var(--color-border-default)] pl-4 space-y-1"
+                            className="overflow-hidden ml-5 border-l border-[var(--color-border-default)] pl-3 space-y-1"
                           >
                             {item.subMenu.map((sub, subIdx) => (
                               <NavLink
@@ -181,9 +194,13 @@ const Sidebar = ({
                                 to={sub.path}
                                 onClick={handleNavClick}
                                 className={({ isActive }) => `
-                                  block px-3 py-2.5 text-[13px]  transition-all
-                                  ${isActive ? "text-[var(--color-primary-600)] font-semibold border-l-2 border-primary-700" : "text-[var(--color-content-muted)] hover:text-[var(--color-content-primary)]"}
-                                `}
+                            block px-3 py-2 rounded-md text-[13px] transition-all
+                            ${
+                              isActive
+                                ? "text-[var(--color-primary-600)] font-semibold border-l-2 border-[var(--color-primary-600)] pl-3"
+                                : "text-[var(--color-content-muted)] hover:text-[var(--color-content-primary)]"
+                            }
+                          `}
                               >
                                 {sub.name}
                               </NavLink>
@@ -193,18 +210,22 @@ const Sidebar = ({
                       </AnimatePresence>
                     </>
                   ) : (
+                    /* SINGLE LINK */
                     <NavLink
                       end
                       to={item.path}
                       onClick={handleNavClick}
                       className={({ isActive }) => `
-                        flex items-center gap-4 px-3 py-2 rounded-sm transition-all
-                        ${isActive ? activeClass : inactiveClass}
-                      `}
+                  flex items-center gap-4 px-3 py-2 rounded-sm transition-all
+                  ${isActive ? activeClass : inactiveClass}
+                `}
                     >
                       <item.icon size={20} className="shrink-0" />
+
                       {!isCollapsed && (
-                        <span className={labelStyle}>{item.name}</span>
+                        <span className={`${labelStyle} truncate`}>
+                          {item.name}
+                        </span>
                       )}
                     </NavLink>
                   )}
@@ -213,14 +234,13 @@ const Sidebar = ({
             })}
           </nav>
 
-          {/* Footer */}
+          {/* FOOTER */}
           {!isCollapsed && (
-            <div className="border-t border-[var(--color-border-default)] p-5">
-              {/* ✅ Fix 1: logout actually works now */}
+            <div className="border-t border-[var(--color-border-default)] p-4 md:p-5">
               <button
                 onClick={handleLogout}
                 disabled={isLoggingOut}
-                className="flex items-center gap-3 bg-red-50 px-4 py-2 rounded-lg font-bold text-sm border border-red-300 text-red-500 w-full hover:bg-red-100 transition-colors disabled:opacity-50"
+                className="flex items-center gap-3 bg-red-300 px-4 py-2 rounded-sm font-bold text-sm border border-red-400 text-red-700 w-full transition-colors disabled:opacity-50"
               >
                 <LogOut size={18} />
                 {isLoggingOut ? "Signing out..." : "Sign Out"}

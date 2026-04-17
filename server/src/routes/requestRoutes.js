@@ -2,7 +2,8 @@ import { Router } from "express";
 import {
   createRequest,
   deleteRequest,
-  getOwnRequest,
+  getOwnRequests,
+  getPendingRequests,
   getRequestById,
   getRequests,
   updateRequest,
@@ -15,16 +16,25 @@ import {
 
 const requestRoutes = Router();
 
+// 1. SPECIFIC/STATIC ROUTES FIRST
+requestRoutes.get("/my-requests", isAuthenticated, getOwnRequests);
+requestRoutes.get("/pending", getPendingRequests);
+// 2. GENERAL REGISTRY
 requestRoutes.get("/", getRequests);
-requestRoutes.post("/", isAuthenticated, createRequest);
+
+// 3. DYNAMIC PARAMETERS LAST
 requestRoutes.get("/:id", getRequestById);
-requestRoutes.get("/own", isAuthenticated, getOwnRequest);
+
+// --- RECORD MODIFICATION ---
+requestRoutes.post("/", isAuthenticated, createRequest);
+
 requestRoutes.patch(
   "/status/:id",
   isAuthenticated,
-  authorizeRoles("admin", "donor"),
+  authorizeRoles("admin", "donor", "volunteer"),
   updateRequestStatus,
 );
+
 requestRoutes.put(
   "/:id",
   isAuthenticated,

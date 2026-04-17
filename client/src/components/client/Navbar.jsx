@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
 import {
   Menu,
@@ -15,14 +15,15 @@ import {
 
 import Button from "../../ui/Button";
 import ThemeToggle from "../../ui/ThemeToggle";
+import { EncryptedText } from "../ui/encrypted-text";
 import { toggleSidebar, closeSidebar } from "../../redux/slices/uiSlice";
 import { logout } from "../../redux/slices/authSlice";
 import { useLogoutMutation } from "../../redux/features/isAuth/authApi";
-import { EncryptedText } from "../ui/encrypted-text";
 
 const Navbar = () => {
   const dispatch = useDispatch();
   const location = useLocation();
+  const navigate = useNavigate();
   const dropdownRef = useRef(null);
 
   const { isAuthenticated, user } = useSelector((state) => state.auth);
@@ -31,6 +32,8 @@ const Navbar = () => {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const [userLogoutFromServer, { isLoading }] = useLogoutMutation();
+
+  // Close dropdown on outside click
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
@@ -41,11 +44,22 @@ const Navbar = () => {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  // Close dropdown on Escape key
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === "Escape") setIsProfileOpen(false);
+    };
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, []);
+
+  // Close sidebar and dropdown on route change
   useEffect(() => {
     dispatch(closeSidebar());
     setIsProfileOpen(false);
   }, [location.pathname, dispatch]);
 
+  // Track scroll for navbar style
   useEffect(() => {
     const handleScroll = () => setIsScrolled(window.scrollY > 20);
     window.addEventListener("scroll", handleScroll, { passive: true });
@@ -57,8 +71,11 @@ const Navbar = () => {
       await userLogoutFromServer();
       dispatch(logout());
       navigate("/login", { replace: true });
-    } catch (error) {}
+    } catch (error) {
+      console.error("Logout failed:", error);
+    }
   };
+
   const navLinks = [
     { name: "Home", path: "/" },
     { name: "Find Donors", path: "/find-donors" },
@@ -68,11 +85,11 @@ const Navbar = () => {
 
   return (
     <nav
-      className={`fixed top-0 w-full z-[100] transition-all duration-500 border-b 
+      className={`fixed top-0 w-full z-[100] transition-all duration-500 border-b
       ${
         isScrolled
-          ? " backdrop-blur-xl border-[var(--color-border-default)] py-3 shadow-md"
-          : "bg-transparent border-[var(--color-border-default)]  py-6"
+          ? "backdrop-blur-xl border-[var(--color-border-default)] py-3 shadow-md"
+          : "bg-transparent border-[var(--color-border-default)] py-6"
       }`}
     >
       <div className="max-w-7xl mx-auto px-6 flex items-center justify-between">
@@ -118,7 +135,9 @@ const Navbar = () => {
             {isAuthenticated ? (
               <div className="relative" ref={dropdownRef}>
                 <button
-                  onClick={() => setIsProfileOpen(!isProfileOpen)}
+                  onClick={() => setIsProfileOpen((prev) => !prev)}
+                  aria-expanded={isProfileOpen}
+                  aria-label="Open profile menu"
                   className="relative group focus:outline-none"
                 >
                   <div className="w-9 h-9 rounded-md border-2 border-[var(--color-border-default)] overflow-hidden group-hover:border-[var(--color-primary-600)] transition-all duration-300">
@@ -136,7 +155,7 @@ const Navbar = () => {
                   </div>
                 </button>
 
-                {/* Dropdown Menu */}
+                {/* Desktop Dropdown */}
                 {isProfileOpen && (
                   <div className="absolute right-0 mt-3 w-56 bg-[var(--color-surface-card)] border border-[var(--color-border-default)] rounded-md shadow-2xl py-2 animate-in fade-in zoom-in-95 duration-200">
                     <div className="px-4 py-2 border-b border-[var(--color-border-default)] mb-1">
@@ -166,9 +185,11 @@ const Navbar = () => {
 
                     <button
                       onClick={handleLogout}
-                      className="w-full flex items-center gap-3 px-4 py-3 text-[10px] font-black uppercase tracking-widest text-red-500 hover:bg-red-500/5 transition-all"
+                      disabled={isLoading}
+                      className="w-full flex items-center gap-3 px-4 py-3 text-[10px] font-black uppercase tracking-widest text-red-500 hover:bg-red-500/5 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      <LogOut size={15} /> Terminate Session
+                      <LogOut size={15} />
+                      {isLoading ? "Signing out..." : "Terminate Session"}
                     </button>
                   </div>
                 )}
@@ -201,12 +222,96 @@ const Navbar = () => {
           <ThemeToggle />
           <button
             onClick={() => dispatch(toggleSidebar())}
+            aria-label={isSidebarOpen ? "Close menu" : "Open menu"}
             className="p-2.5 rounded-xl bg-[var(--color-surface-muted)] text-[var(--color-content-primary)]"
           >
             {isSidebarOpen ? <X size={20} /> : <Menu size={20} />}
           </button>
         </div>
       </div>
+
+      {/* Mobile Menu */}
+      {isSidebarOpen && (
+        <div className="md:hidden border-t border-[var(--color-border-default)] bg-[var(--color-surface-card)] px-6 py-4 flex flex-col gap-4">
+          {/* Nav Links */}
+          <ul className="flex flex-col gap-1">
+            {navLinks.map((link) => (
+              <li key={link.name}>
+                <Link
+                  to={link.path}
+                  className={`block px-3 py-2.5 rounded-lg text-[10px] font-black uppercase tracking-[0.2em] transition-colors ${
+                    location.pathname === link.path
+                      ? "text-[var(--color-primary-600)] bg-[var(--color-surface-muted)]"
+                      : "text-[var(--color-content-muted)] hover:text-[var(--color-content-primary)] hover:bg-[var(--color-surface-muted)]"
+                  }`}
+                >
+                  {link.name}
+                </Link>
+              </li>
+            ))}
+          </ul>
+
+          {/* Auth Section */}
+          <div className="border-t border-[var(--color-border-default)] pt-4">
+            {isAuthenticated ? (
+              <div className="flex flex-col gap-1">
+                <div className="px-3 py-2 mb-1">
+                  <p className="text-[9px] font-black uppercase tracking-[0.2em] text-[var(--color-content-muted)]">
+                    Signed in as
+                  </p>
+                  <p className="text-[11px] font-bold text-[var(--color-content-primary)] truncate">
+                    {user?.email}
+                  </p>
+                </div>
+
+                <Link
+                  to="/dashboard"
+                  className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-[10px] font-black uppercase tracking-widest text-[var(--color-content-muted)] hover:text-[var(--color-primary-600)] hover:bg-[var(--color-surface-muted)] transition-all"
+                >
+                  <LayoutDashboard size={15} /> Dashboard
+                </Link>
+
+                <Link
+                  to="/settings"
+                  className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-[10px] font-black uppercase tracking-widest text-[var(--color-content-muted)] hover:text-[var(--color-primary-600)] hover:bg-[var(--color-surface-muted)] transition-all"
+                >
+                  <Settings size={15} /> System Settings
+                </Link>
+
+                <div className="my-1 border-t border-[var(--color-border-default)]" />
+
+                <button
+                  onClick={handleLogout}
+                  disabled={isLoading}
+                  className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-[10px] font-black uppercase tracking-widest text-red-500 hover:bg-red-500/5 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <LogOut size={15} />
+                  {isLoading ? "Signing out..." : "Terminate Session"}
+                </button>
+              </div>
+            ) : (
+              <div className="flex flex-col gap-2">
+                <Link to="/login">
+                  <Button
+                    variant="primary"
+                    className="w-full h-9 text-[10px] font-black uppercase tracking-widest"
+                  >
+                    <LogIn size={12} className="mr-2" /> Sign In
+                  </Button>
+                </Link>
+                <Link to="/register">
+                  <Button
+                    variant="secondary"
+                    className="w-full h-9 font-black uppercase tracking-widest"
+                  >
+                    <UserPlus size={12} className="mr-2" /> Sign Up
+                  </Button>
+                </Link>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </nav>
   );
 };

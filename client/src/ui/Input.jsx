@@ -1,3 +1,4 @@
+import { Eye, EyeClosed, EyeOff } from "lucide-react";
 import React, { useState } from "react";
 
 const Input = React.forwardRef(
@@ -25,6 +26,7 @@ const Input = React.forwardRef(
           )}
 
           <input
+            readOnly={props.readOnly}
             type={
               type === "password"
                 ? isPasswordVisible
@@ -55,12 +57,13 @@ const Input = React.forwardRef(
               onClick={() => setPasswordVisible((v) => !v)} // ✅ toggle here, not on input
               className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[var(--color-content-muted)] cursor-pointer select-none"
             >
-              {isPasswordVisible ? "👁" : "👁‍🗨"}
+              {isPasswordVisible ? <Eye size={16} /> : <EyeOff size={16} />}
             </span>
           )}
         </div>
 
         {/* Error Message with micro-typography */}
+
         {error && (
           <p className="text-[10px] font-bold text-[var(--color-error-solid)] uppercase tracking-wide px-1">
             {error}

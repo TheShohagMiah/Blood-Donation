@@ -58,11 +58,11 @@ const Hero = () => {
               Join as a donor
             </Button>
             <Button
-              onClick={() => navigate("/find-donors")}
+              onClick={() => navigate("/search")}
               variant="secondary"
               className="btn-lg btn-secondary w-full sm:w-auto"
             >
-              Find a donor
+              Search Donors
             </Button>
           </div>
 

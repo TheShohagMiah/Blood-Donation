@@ -5,6 +5,7 @@ import Hero from "./Home/components/Hero";
 import Stats from "./Home/components/Stats";
 import Features from "./Home/components/Features";
 import QnASection from "./Home/components/Qna";
+import Services from "../../components/client/Services";
 
 const Home = () => {
   return (
@@ -17,7 +18,7 @@ const Home = () => {
 
       {/* 3. Features Section */}
       <Features />
-
+      <Services />
       <QnASection />
     </div>
   );

@@ -1,5 +1,9 @@
 import Request from "../models/request.js";
 
+/**
+ * @desc    Create a new donation entry
+ * @access  Private
+ */
 export const createRequest = async (req, res, next) => {
   try {
     const request = await Request.create({
@@ -9,51 +13,54 @@ export const createRequest = async (req, res, next) => {
 
     res.status(201).json({
       success: true,
-      message: "Donation request posted successfully.",
-      request,
+      message: "SYSTEM_ENTRY_POSTED: Logged successfully.",
+      data: request,
     });
   } catch (error) {
     next(error);
   }
 };
 
+/**
+ * @desc    Fetch and filter pending entries (Public Registry)
+ * @access  Public
+ */
 export const getRequests = async (req, res, next) => {
   try {
     const {
       bloodGroup,
       district,
       upazila,
-      status,
+      status = "pending",
       page = 1,
-      limit = 5,
+      limit = 10,
       search,
     } = req.query;
 
-    const pageNum = parseInt(page);
-    const limitNum = parseInt(limit);
+    const pageNum = Math.max(1, parseInt(page));
+    const limitNum = Math.max(1, parseInt(limit));
     const skip = (pageNum - 1) * limitNum;
 
-    const query = {};
+    const query = { status };
     if (bloodGroup) query.bloodGroup = bloodGroup;
     if (district) query.district = district;
     if (upazila) query.upazila = upazila;
-    if (status) query.status = status;
 
     if (search) {
       query.$or = [
         { recipientName: { $regex: search, $options: "i" } },
         { hospitalName: { $regex: search, $options: "i" } },
-        { bloodGroup: { $regex: search, $options: "i" } },
       ];
     }
 
     const [totalRequests, requests] = await Promise.all([
       Request.countDocuments(query),
-      Request.find({ ...query, status: "pending" })
+      Request.find(query)
         .populate("requester", "name email contactNumber")
         .skip(skip)
         .limit(limitNum)
-        .sort({ createdAt: -1 }),
+        .sort({ createdAt: -1 })
+        .lean(),
     ]);
 
     res.status(200).json({
@@ -62,46 +69,8 @@ export const getRequests = async (req, res, next) => {
         totalRequests,
         totalPages: Math.ceil(totalRequests / limitNum),
         currentPage: pageNum,
+        pageSize: requests.length,
       },
-      requests,
-    });
-  } catch (error) {
-    next(error);
-  }
-};
-
-export const getRequestById = async (req, res, next) => {
-  try {
-    const { id } = req.params;
-    const request = await Request.findById(id).populate(
-      "requester",
-      "name email contactNumber",
-    );
-    if (!request) {
-      const error = new Error("Request not found.");
-      error.statusCode = 404;
-      return next(error);
-    }
-    res.status(200).json({
-      success: true,
-      data: request,
-    });
-  } catch (error) {
-    next(error);
-  }
-};
-
-export const getOwnRequest = async (req, res, next) => {
-  try {
-    const userId = req.user.id;
-    const [total, requests] = await Promise.all([
-      Request.countDocuments({ requester: userId }),
-      Request.find({ requester: userId }).sort({ createdAt: -1 }),
-    ]);
-
-    res.status(200).json({
-      success: true,
-      count: total,
       data: requests,
     });
   } catch (error) {
@@ -109,22 +78,94 @@ export const getOwnRequest = async (req, res, next) => {
   }
 };
 
-export const updateRequest = async (req, res, next) => {
+export const getPendingRequests = async (req, res, next) => {
   try {
-    const id = req.params.id;
-    const request = await Request.findById(id);
+    const pendingRequests = await Request.find({ status: "pending" })
+      .populate("requester", "name email contactNumber")
+      .sort({ createdAt: -1 })
+      .lean();
 
+    if (!pendingRequests.length) {
+      const error = new Error("DATA_NOT_FOUND: No pending requests.");
+      error.statusCode = 404;
+      return next(error);
+    }
+    res.status(200).json({
+      success: true,
+      message: "PENDING_REQUESTS_RETRIEVED: Sync complete.",
+      data: pendingRequests,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * @desc    Modify entry status (Owner/Admin/Volunteer)
+ * @access  Private
+ */
+export const updateRequestStatus = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const { status } = req.body;
+
+    const VALID_STATUSES = ["pending", "inprogress", "done", "cancelled"];
+    if (!VALID_STATUSES.includes(status)) {
+      const error = new Error("PROTOCOL_ERROR: Invalid status code.");
+      error.statusCode = 400;
+      return next(error);
+    }
+
+    const request = await Request.findById(id);
     if (!request) {
-      const error = new Error("Donation request not found.");
+      const error = new Error("DATA_NOT_FOUND: Registry record missing.");
       error.statusCode = 404;
       return next(error);
     }
 
-    const isOwner = request.requester.toString() === req.user.id.toString();
-    const isAdmin = req.user.role === "admin";
+    const isAuthorized =
+      request.requester.toString() === req.user.id.toString() ||
+      ["admin", "volunteer"].includes(req.user.role);
 
-    if (!isOwner && !isAdmin) {
-      const error = new Error("Not authorized to update this request.");
+    if (!isAuthorized) {
+      const error = new Error("ACCESS_DENIED: Unauthorized modification.");
+      error.statusCode = 403;
+      return next(error);
+    }
+
+    request.status = status;
+    const updatedRequest = await request.save();
+
+    res.status(200).json({
+      success: true,
+      message: `STATUS_MODIFIED: Set to ${status}.`,
+      data: updatedRequest,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * @desc    Update registry record (Owner/Admin)
+ * @access  Private
+ */
+export const updateRequest = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const request = await Request.findById(id);
+
+    if (!request) {
+      const error = new Error("DATA_NOT_FOUND: Record missing.");
+      error.statusCode = 404;
+      return next(error);
+    }
+
+    if (
+      request.requester.toString() !== req.user.id.toString() &&
+      req.user.role !== "admin"
+    ) {
+      const error = new Error("ACCESS_DENIED: Insufficient permissions.");
       error.statusCode = 403;
       return next(error);
     }
@@ -132,8 +173,8 @@ export const updateRequest = async (req, res, next) => {
     const updatedData = await Request.findByIdAndUpdate(
       id,
       { $set: req.body },
-      { new: true, runValidators: true },
-    );
+      { new: true, runValidators: true, context: "query" },
+    ).lean();
 
     res.status(200).json({
       success: true,
@@ -141,26 +182,34 @@ export const updateRequest = async (req, res, next) => {
       data: updatedData,
     });
   } catch (error) {
+    if (error.name === "CastError") {
+      error.message = "PROTOCOL_ERROR: Invalid record ID.";
+      error.statusCode = 400;
+    }
     next(error);
   }
 };
 
+/**
+ * @desc    Hard delete record (Owner/Admin)
+ * @access  Private
+ */
 export const deleteRequest = async (req, res, next) => {
   try {
-    const id = req.params.id;
+    const { id } = req.params;
     const request = await Request.findById(id);
 
     if (!request) {
-      const error = new Error("Request not found.");
+      const error = new Error("DATA_NOT_FOUND: Record missing.");
       error.statusCode = 404;
       return next(error);
     }
 
-    const isOwner = request.requester.toString() === req.user.id.toString();
-    const isAdmin = req.user.role === "admin";
-
-    if (!isOwner && !isAdmin) {
-      const error = new Error("Not authorized to delete this request.");
+    if (
+      request.requester.toString() !== req.user.id.toString() &&
+      req.user.role !== "admin"
+    ) {
+      const error = new Error("ACCESS_DENIED: Insufficient permissions.");
       error.statusCode = 403;
       return next(error);
     }
@@ -169,51 +218,60 @@ export const deleteRequest = async (req, res, next) => {
 
     res.status(200).json({
       success: true,
-      message: "Donation request deleted successfully.",
+      message: "DATA_PURGED: Record removed.",
     });
   } catch (error) {
     next(error);
   }
 };
 
-export const updateRequestStatus = async (req, res, next) => {
+/**
+ * @desc    Full telemetry for single record
+ * @access  Public
+ */
+export const getRequestById = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const { status } = req.body;
+    const request = await Request.findById(id)
+      .populate("requester", "name email contactNumber")
+      .lean();
 
-    const allowedStatuses = ["pending", "inprogress", "done", "cancelled"];
-    if (!allowedStatuses.includes(status)) {
-      const error = new Error("Invalid status value.");
-      error.statusCode = 400;
-      return next(error);
-    }
-
-    const request = await Request.findById(id);
     if (!request) {
-      const error = new Error("Request not found.");
+      const error = new Error("DATA_NOT_FOUND: Record missing.");
       error.statusCode = 404;
       return next(error);
     }
 
-    // 2. Authorization Check
-    const isOwner = request.requester.toString() === req.user.id.toString();
-    const isAdmin = req.user.role === "admin";
-    const isVolunteer = req.user.role === "volunteer";
-
-    if (!isOwner && !isAdmin && !isVolunteer) {
-      const error = new Error("Not authorized to change this status.");
-      error.statusCode = 403;
-      return next(error);
+    res.status(200).json({
+      success: true,
+      message: "RECORD_ACCESS_GRANTED: Data retrieved.",
+      data: request,
+    });
+  } catch (error) {
+    if (error.name === "CastError") {
+      error.message = "PROTOCOL_ERROR: Invalid ID format.";
+      error.statusCode = 400;
     }
+    next(error);
+  }
+};
 
-    // 3. Update only the status field
-    request.status = status;
-    await request.save();
+/**
+ * @desc    Fetch current user records
+ * @access  Private
+ */
+export const getOwnRequests = async (req, res, next) => {
+  try {
+    const [total, requests] = await Promise.all([
+      Request.countDocuments({ requester: req.user.id }),
+      Request.find({ requester: req.user.id }).sort({ createdAt: -1 }).lean(),
+    ]);
 
     res.status(200).json({
       success: true,
-      message: `Status updated to ${status} successfully.`,
-      request,
+      message: "SYSTEM_RECORDS_RETRIEVED: Sync complete.",
+      count: total,
+      data: requests,
     });
   } catch (error) {
     next(error);

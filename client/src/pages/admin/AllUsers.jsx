@@ -18,23 +18,26 @@ import {
 import Loader from "../../ui/Loader";
 import DeleteUserModal from "../../ui/DeleteModal";
 import { toast } from "react-hot-toast";
+import AllUsersTableRow from "../../ui/AllUsersTableRow";
+import Pagination from "../../ui/Pagination";
+import { useDebounce } from "../../hooks/useDebounce";
 
-const ROLE_STYLES = {
-  admin: "bg-purple-100 text-purple-700 border-purple-200",
-  volunteer: "bg-blue-100 text-blue-700 border-blue-200",
-  donor: "bg-emerald-100 text-emerald-700 border-emerald-200",
-};
-const STATUS_STYLES = {
-  active: "text-emerald-600",
-  blocked: "text-red-600",
-};
 const AllUsers = () => {
   const [searchQuery, setSearchQuery] = useState("");
+  const debouncedSearch = useDebounce(searchQuery, 400);
   const [filter, setFilter] = useState("all");
   const [activeMenu, setActiveMenu] = useState(null);
   const [deleteTarget, setDeleteTarget] = useState(null);
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(5);
+  const [totalPages, setTotalPages] = useState(1);
+  const { data, isLoading, error } = useGetAllUsersQuery({
+    page,
+    limit,
+    search: debouncedSearch,
+    status: filter,
+  });
 
-  const { data, isLoading, error } = useGetAllUsersQuery();
   const [deleteUser] = useDeleteUserMutation();
   const [updateStatus] = useUpdateStatusMutation();
   const [updateRole] = useUpdateRoleMutation();
@@ -49,7 +52,7 @@ const AllUsers = () => {
   }, [activeMenu]);
 
   const filteredUsers = useMemo(() => {
-    const users = data?.users || [];
+    const users = data?.data || [];
     return users.filter((user) => {
       const matchesFilter = filter === "all" || user.status === filter;
       const matchesSearch =
@@ -98,6 +101,15 @@ const AllUsers = () => {
     },
     [deleteUser],
   );
+  useEffect(() => {
+    if (data?.totalPages) {
+      setTotalPages(data.totalPages);
+    }
+  }, [data]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [debouncedSearch, filter]);
 
   if (isLoading) return <Loader />;
   if (error)
@@ -155,8 +167,7 @@ const AllUsers = () => {
         </div>
       </header>
 
-      {/* ✅ Removed overflow-hidden from outer — it was clipping the dropdown */}
-      <div className="bg-[var(--color-surface-card)] border border-[var(--color-border-default)] rounded-[var(--radius-2xl)] shadow-sm">
+      <div className="bg-[var(--color-surface-card)] border border-[var(--color-border-default)] rounded-[var(--radius-md)] shadow-sm">
         <div className="overflow-x-auto rounded-[var(--radius-2xl)]">
           <table className="w-full text-left border-collapse min-w-[800px]">
             <thead>
@@ -165,18 +176,23 @@ const AllUsers = () => {
                   Member Identity
                 </th>
                 <th className="px-8 py-5 text-[10px] font-black uppercase tracking-[0.2em] text-[var(--color-content-muted)]">
+                  Blood Group
+                </th>
+                <th className="px-8 py-5 text-[10px] font-black uppercase tracking-[0.2em] text-[var(--color-content-muted)]">
                   Authorization
                 </th>
                 <th className="px-8 py-5 text-[10px] font-black uppercase tracking-[0.2em] text-[var(--color-content-muted)]">
                   Current Status
                 </th>
-                <th className="px-8 py-5 text-right"></th>
+                <th className="px-8 py-5 text-[10px] font-black uppercase tracking-[0.2em] text-[var(--color-content-muted)]">
+                  Actions
+                </th>
               </tr>
             </thead>
             <tbody className="divide-y divide-[var(--color-border-default)]">
               {filteredUsers.length > 0 ? (
                 filteredUsers.map((user) => (
-                  <UserRow
+                  <AllUsersTableRow
                     key={user._id}
                     user={user}
                     isOpen={activeMenu === user._id}
@@ -201,6 +217,9 @@ const AllUsers = () => {
         </div>
       </div>
 
+      {/* Pagniation */}
+      <Pagination page={page} setPage={setPage} totalPages={totalPages} />
+
       {deleteTarget && (
         <DeleteUserModal
           isOpen={!!deleteTarget}
@@ -215,154 +234,5 @@ const AllUsers = () => {
     </div>
   );
 };
-
-const UserRow = React.memo(
-  ({
-    user,
-    isOpen,
-    onToggle,
-    onUpdateRole,
-    onUpdateStatus,
-    onDeleteRequest,
-  }) => (
-    <tr
-      className={`group transition-colors ${
-        isOpen
-          ? "bg-[var(--color-surface-tertiary)]/30"
-          : "hover:bg-[var(--color-surface-tertiary)]/10"
-      }`}
-    >
-      <td className="px-8 py-5">
-        <div className="flex items-center gap-4">
-          <div className="relative">
-            <img
-              src={user.avatar}
-              className="w-10 h-10 rounded-xl object-cover border border-[var(--color-border-default)]"
-              alt=""
-            />
-            <div
-              className={`absolute -bottom-1 -right-1 w-3 h-3 border-2 border-[var(--color-surface-card)] rounded-full ${
-                user.status === "active" ? "bg-emerald-500" : "bg-red-500"
-              }`}
-            />
-          </div>
-          <div className="flex flex-col">
-            <span className="text-sm font-bold text-[var(--color-content-primary)] tracking-tight">
-              {user.name}
-            </span>
-            <span className="text-[12px] text-[var(--color-content-muted)]   opacity-70">
-              {user.email}
-            </span>
-          </div>
-        </div>
-      </td>
-      <td className="px-8 py-5">
-        <span
-          className={`inline-flex text-[9px] font-black uppercase px-2.5 py-1 rounded-lg tracking-[0.15em] border ${
-            ROLE_STYLES[user.role] ||
-            "bg-gray-100 text-gray-700 border-gray-200"
-          }`}
-        >
-          {user.role}
-        </span>
-      </td>
-      <td className="px-8 py-5">
-        <span
-          className={`text-[9px] font-black uppercase tracking-widest ${STATUS_STYLES[user.status] || "text-gray-500"}`}
-        >
-          {user.status}
-        </span>
-      </td>
-      <td className="px-8 py-5 text-right">
-        <div className="relative inline-block">
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              onToggle();
-            }}
-            className="p-2 rounded-lg hover:bg-[var(--color-surface-tertiary)] transition-all"
-          >
-            <MoreHorizontal
-              size={20}
-              className="text-[var(--color-content-muted)]"
-            />
-          </button>
-
-          {isOpen && (
-            <div
-              onClick={(e) => e.stopPropagation()}
-              className="absolute right-0 top-full mt-1 w-52 bg-[var(--color-surface-card)] border border-[var(--color-border-default)] rounded-xl shadow-2xl z-50 py-2 animate-in fade-in zoom-in-95 duration-200"
-            >
-              <DropdownItem
-                onClick={() =>
-                  onUpdateRole({
-                    id: user._id,
-                    role: user.role === "donor" ? "volunteer" : "donor",
-                  })
-                }
-                icon={
-                  user.role === "donor" ? (
-                    <UserCog size={14} />
-                  ) : (
-                    <ShieldCheck size={14} />
-                  )
-                }
-              >
-                MAKE {user.role === "donor" ? "VOLUNTEER" : "DONOR"}
-              </DropdownItem>
-              {user.role !== "admin" && (
-                <DropdownItem
-                  onClick={() => onUpdateRole({ id: user._id, role: "admin" })}
-                  icon={<ShieldCheck size={14} />}
-                >
-                  MAKE ADMIN
-                </DropdownItem>
-              )}
-              <div className="my-1 border-t border-[var(--color-border-default)]" />
-              <DropdownItem
-                onClick={() =>
-                  onUpdateStatus({
-                    id: user._id,
-                    status: user.status === "active" ? "blocked" : "active",
-                  })
-                }
-                icon={
-                  user.status === "active" ? (
-                    <Ban size={14} />
-                  ) : (
-                    <Unlock size={14} />
-                  )
-                }
-                className={
-                  user.status === "active"
-                    ? "text-amber-600"
-                    : "text-emerald-600"
-                }
-              >
-                {user.status === "active" ? "BLOCK USER" : "UNBLOCK USER"}
-              </DropdownItem>
-              <DropdownItem
-                onClick={onDeleteRequest}
-                icon={<Trash2 size={14} />}
-                className="text-red-600 hover:bg-red-50"
-              >
-                DELETE USER
-              </DropdownItem>
-            </div>
-          )}
-        </div>
-      </td>
-    </tr>
-  ),
-);
-
-const DropdownItem = ({ children, icon, onClick, className = "" }) => (
-  <button
-    onClick={onClick}
-    className={`w-full px-4 py-2.5 text-left text-[9px] font-black uppercase tracking-widest hover:bg-[var(--color-surface-muted)] flex items-center gap-3 transition-colors ${className}`}
-  >
-    {icon} {children}
-  </button>
-);
 
 export default AllUsers;

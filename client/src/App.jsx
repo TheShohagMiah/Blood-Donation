@@ -35,6 +35,7 @@ import { ProtectedRoute } from "./components/ProtectedRoute";
 import DonorSearchPage from "./pages/client/Search";
 import CreateBloodRequestFromDashboard from "./pages/admin/CreateRequest";
 import EditRequest from "./pages/admin/EditRequest";
+import RequestDetails from "./pages/shared/RequestDetails";
 
 const App = () => {
   const dispatch = useDispatch();
@@ -110,7 +111,14 @@ const App = () => {
           <Route path="search" element={<DonorSearchPage />} />
 
           <Route path="find-donors" element={<FindDonors />} />
-
+          <Route
+            path="requests/:id"
+            element={
+              <ProtectedRoute>
+                <RequestDetails />
+              </ProtectedRoute>
+            }
+          />
           {/* Auth Routes */}
           <Route
             path="login"
@@ -145,12 +153,13 @@ const App = () => {
           <Route path="users" element={<AllUsers />} />
           <Route path="users/add" element={<AddUser />} />
 
-          <Route path="donation-requests" element={<AllDonationRequests />} />
+          <Route path="all-requests" element={<AllDonationRequests />} />
           <Route
-            path="donation-requests/create"
+            path="blood-requests/create"
             element={<CreateBloodRequestFromDashboard />}
           />
           <Route path="donation-requests/edit/:id" element={<EditRequest />} />
+          <Route path="donation-requests" element={<div>All Donations</div>} />
           <Route path="profile" element={<Profile />} />
         </Route>
 

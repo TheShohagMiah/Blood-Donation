@@ -2,17 +2,15 @@ import React from "react";
 import {
   LayoutDashboard,
   Users,
-  HandHeart,
   Settings,
-  ShieldCheck,
   UserPlus,
   ClipboardList,
+  HeartHandshake,
+  Droplet,
+  ListChecks,
+  Activity,
 } from "lucide-react";
 
-/**
- * Navigation configuration for the dashboard.
- * Supports role-based access control and nested sub-menus.
- */
 export const navLinks = [
   {
     id: "overview",
@@ -21,6 +19,7 @@ export const navLinks = [
     icon: LayoutDashboard,
     roles: ["admin", "donor", "volunteer"],
   },
+
   {
     id: "user-management",
     name: "User Management",
@@ -43,28 +42,46 @@ export const navLinks = [
       },
     ],
   },
+
   {
-    id: "donations",
-    name: "Donations",
-    icon: HandHeart,
-    roles: ["admin", "donor"],
+    id: "requests",
+    name: "Blood Requests",
+    icon: Droplet, // ✅ more accurate than HandHeart
+    roles: ["admin", "volunteer"],
     subMenu: [
       {
         id: "all-requests",
         name: "All Requests",
-        path: "/dashboard/donation-requests",
-        icon: ClipboardList,
+        path: "/dashboard/all-requests",
+        icon: ListChecks, // ✅ list of tasks/requests
         roles: ["admin", "donor"],
       },
       {
         id: "new-request",
         name: "New Request",
-        path: "/dashboard/donation-requests/create",
+        path: "/dashboard/blood-requests/create",
         icon: UserPlus,
         roles: ["admin", "donor"],
       },
     ],
   },
+
+  {
+    id: "donation-requests",
+    name: "Donations",
+    icon: HeartHandshake, // ✅ better meaning (helping/donation)
+    roles: ["admin", "volunteer"],
+    subMenu: [
+      {
+        id: "all-donation-requests",
+        name: "All Donations",
+        path: "/dashboard/donation-requests",
+        icon: Activity, // ✅ activity/logs
+        roles: ["admin", "donor"],
+      },
+    ],
+  },
+
   {
     id: "settings",
     name: "Settings",

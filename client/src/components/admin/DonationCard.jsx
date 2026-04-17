@@ -16,6 +16,11 @@ const DonationCard = ({ donation, req }) => (
           Req by:{" "}
           <span className="text-[var(--color-content-primary)]">
             {req?.requester?.name || "System"}
+            {req?.status === "in-progress" && (
+              <span className="text-[10px] text-blue-600 font-bold uppercase tracking-wide">
+                Mark as Done
+              </span>
+            )}
           </span>
         </p>
       </div>

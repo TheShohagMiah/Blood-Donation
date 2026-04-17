@@ -36,6 +36,7 @@ const Select = React.forwardRef(
             text-sm font-normal text-[var(--color-content-primary)] 
             appearance-none
             transition-all duration-200
+            placeholder:text-[var(--color-content-muted)]
             hover:border-[var(--color-border-strong)]
             focus:outline-none focus:ring-2 focus:ring-[var(--color-primary-subtle)] focus:border-[var(--color-primary-600)]
             disabled:opacity-50 disabled:cursor-not-allowed

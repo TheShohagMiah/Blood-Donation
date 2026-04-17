@@ -1,28 +1,27 @@
 import React, { useEffect } from "react";
 import { useForm } from "react-hook-form";
-import { X, Clock, MessageSquare, CheckCircle2 } from "lucide-react";
+import {
+  X,
+  Clock,
+  MessageSquare,
+  CheckCircle2,
+  Mail,
+  User2,
+} from "lucide-react";
 import Button from "../ui/Button";
 import Input from "../ui/Input";
 import Select from "../ui/Select";
 import { useCreateDonationMutation } from "../redux/features/donation/donationApi";
 import { toast } from "react-hot-toast";
 
-const DonationModal = ({ isOpen, onClose, selectedRequest }) => {
+const DonationModal = ({
+  isOpen,
+  onClose,
+  selectedRequest,
+  showName,
+  showEmail,
+}) => {
   const [createDonation, { isSuccess, error }] = useCreateDonationMutation();
-
-  const handleDonationSubmit = async (data) => {
-    try {
-      await createDonation({
-        ...data,
-        requestId: selectedRequest._id,
-      }).unwrap();
-      onClose();
-    } catch (error) {
-      toast.error(
-        error?.data?.message || "Failed to commit donation. Please try again.",
-      );
-    }
-  };
   const {
     register,
     handleSubmit,
@@ -33,10 +32,31 @@ const DonationModal = ({ isOpen, onClose, selectedRequest }) => {
       message: "",
       status: "interested",
       estimatedArrivalTime: "",
+      name: "",
+      email: "",
     },
   });
 
-  // Reset form when modal closes/opens
+  const handleDonationSubmit = async (data) => {
+    try {
+      await createDonation({
+        ...data,
+        requestId: selectedRequest?._id,
+      }).unwrap();
+    } catch (err) {
+      toast.error(
+        err?.data?.message || "Failed to commit donation. Please try again.",
+      );
+    }
+  };
+
+  useEffect(() => {
+    if (isSuccess) {
+      reset();
+      onClose();
+    }
+  }, [isSuccess, reset, onClose]);
+
   useEffect(() => {
     if (!isOpen) reset();
   }, [isOpen, reset]);
@@ -76,7 +96,35 @@ const DonationModal = ({ isOpen, onClose, selectedRequest }) => {
 
         {/* Form Body */}
         <div className="p-8 space-y-6">
-          {/* Status & Arrival Grid */}
+          {/* ✅ FIXED optional fields */}
+          {(showName || showEmail) && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+              {showName && (
+                <Input
+                  label="Name"
+                  icon={User2}
+                  placeholder="Your name"
+                  value={showName}
+                  readOnly={true}
+                  {...register("name")}
+                  error={errors.name?.message}
+                />
+              )}
+              {showEmail && (
+                <Input
+                  label="Email"
+                  icon={Mail}
+                  value={showEmail}
+                  readOnly={true}
+                  placeholder="Your email"
+                  {...register("email")}
+                  error={errors.email?.message}
+                />
+              )}
+            </div>
+          )}
+
+          {/* Status & Arrival */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
             <Select
               label="Your Status"
@@ -97,7 +145,7 @@ const DonationModal = ({ isOpen, onClose, selectedRequest }) => {
             />
           </div>
 
-          {/* Message Area */}
+          {/* Message */}
           <div className="space-y-2">
             <label className="text-[10px] font-black uppercase tracking-[0.2em] text-[var(--color-content-muted)] flex items-center gap-2">
               <MessageSquare
@@ -106,14 +154,16 @@ const DonationModal = ({ isOpen, onClose, selectedRequest }) => {
               />
               Message to Recipient
             </label>
+
             <textarea
               {...register("message", {
                 required: "Please provide a short message",
                 minLength: { value: 10, message: "Message too short" },
               })}
-              placeholder="e.g. I am O+ and starting from Mirpur now. Please keep the patient's file ready."
+              placeholder="e.g. I am O+ and starting now..."
               className="w-full min-h-[120px] p-4 bg-[var(--color-surface-main)] border border-[var(--color-border-default)] rounded-[var(--radius-xl)] text-sm focus:outline-none focus:border-[var(--color-primary-600)] transition-all resize-none shadow-sm placeholder:text-[var(--color-content-muted)]"
             />
+
             {errors.message && (
               <p className="text-[11px] font-medium text-red-500 flex items-center gap-1">
                 <X size={12} /> {errors.message.message}
@@ -121,7 +171,7 @@ const DonationModal = ({ isOpen, onClose, selectedRequest }) => {
             )}
           </div>
 
-          {/* Guidelines Box */}
+          {/* Guidelines */}
           <div className="p-4 bg-[var(--color-primary-50)] rounded-[var(--radius-lg)] border border-[var(--color-primary-100)]">
             <p className="text-[11px] text-[var(--color-primary-700)] font-medium leading-relaxed">
               <strong>Note:</strong> By submitting, you agree to show up as soon
@@ -131,7 +181,7 @@ const DonationModal = ({ isOpen, onClose, selectedRequest }) => {
           </div>
         </div>
 
-        {/* Footer Actions */}
+        {/* Footer */}
         <div className="px-8 py-6 bg-[var(--color-surface-secondary)] border-t border-[var(--color-border-default)] flex justify-end gap-3">
           <Button
             type="button"
@@ -141,6 +191,7 @@ const DonationModal = ({ isOpen, onClose, selectedRequest }) => {
           >
             Cancel
           </Button>
+
           <Button
             type="submit"
             variant="primary"

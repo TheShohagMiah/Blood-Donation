@@ -11,7 +11,10 @@ import {
 import StatsCard from "../../ui/StatsCard";
 import { useSelector } from "react-redux";
 import { useGetStatsQuery } from "../../redux/features/isAuth/authApi";
-import { useGetBloodRequestsQuery } from "../../redux/features/bloodRequest/bloodRequestApi";
+import {
+  useGetBloodRequestsQuery,
+  useGetPendingRequestsQuery,
+} from "../../redux/features/bloodRequest/bloodRequestApi";
 import Loader from "../../ui/Loader";
 import { EncryptedText } from "../../components/ui/encrypted-text";
 
@@ -32,14 +35,12 @@ const AdminDashboard = () => {
   const { user } = useSelector((state) => state.auth);
   const { data: stats, isLoading: statsLoading } = useGetStatsQuery();
 
-  // ✅ Fix 2: real data for recent requests
   const { data: requestsData, isLoading: requestsLoading } =
-    useGetBloodRequestsQuery();
+    useGetPendingRequestsQuery();
 
   if (statsLoading || requestsLoading) return <Loader />;
 
-  // Show the 5 most recent requests
-  const recentRequests = requestsData?.requests?.slice(0, 5) || [];
+  const recentRequests = requestsData?.data?.slice(0, 5) || [];
 
   return (
     <div className="animate-in fade-in duration-500">
@@ -54,15 +55,8 @@ const AdminDashboard = () => {
                 revealDelayMs={50}
               />
             </h1>
-            <p className="text-[var(--color-content-muted)] mt-1 text-sm">
-              Operational metrics for{" "}
-              <span className="text-[var(--color-primary-600)] font-bold">
-                LifeFlow Terminal
-              </span>
-              .
-            </p>
           </div>
-          <button className="flex items-center gap-2 px-4 py-2 bg-[var(--color-surface-muted)] border border-[var(--color-border-default)] rounded-xl text-xs font-bold uppercase tracking-widest hover:bg-[var(--color-border-default)] transition-all">
+          <button className="w-fit flex items-center gap-2 px-4 py-2 bg-[var(--color-surface-muted)] border border-[var(--color-border-default)] rounded-xl text-xs font-bold uppercase tracking-widest hover:bg-[var(--color-border-default)] transition-all">
             Download Report <ArrowUpRight size={14} />
           </button>
         </div>
@@ -89,7 +83,7 @@ const AdminDashboard = () => {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Recent Requests Table */}
-        <div className="lg:col-span-2 bg-[var(--color-surface-card)] border border-[var(--color-border-default)] rounded-2xl overflow-hidden">
+        <div className="lg:col-span-2 bg-[var(--color-surface-card)] border border-[var(--color-border-default)] rounded-md overflow-hidden shadow-xl">
           <div className="px-6 py-4 border-b border-[var(--color-border-default)] flex justify-between items-center">
             <h3 className="text-[11px] font-black uppercase tracking-[0.2em] text-[var(--color-content-muted)]">
               Recent Requests
@@ -165,7 +159,7 @@ const AdminDashboard = () => {
 
         {/* System Health Widget */}
         <div className="space-y-6">
-          <div className="bg-[var(--color-surface-card)] border border-[var(--color-border-default)] p-6 rounded-2xl">
+          <div className="bg-[var(--color-surface-card)] border border-[var(--color-border-default)] p-6 rounded-md shadow-xl">
             <h3 className="text-[11px] font-black uppercase tracking-[0.2em] text-[var(--color-content-muted)] mb-4">
               System Health
             </h3>

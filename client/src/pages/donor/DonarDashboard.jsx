@@ -33,7 +33,7 @@ const DonorDashboard = () => {
   );
   const totalCount =
     donationsResponse?.pagination?.total ?? donationsResponse?.total ?? 0;
-  const recentDonations = useMemo(() => donations.slice(0, 5), [donations]);
+  const recentDonations = useMemo(() => donations.slice(0, 3), [donations]);
 
   if (isLoading) return <Loader />;
 

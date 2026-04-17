@@ -15,15 +15,20 @@ import Button from "../../ui/Button";
 import DonationModal from "../../ui/DonationModal";
 import RequestViewModal from "../../ui/RequestViewModal";
 import CreateBloodRequest from "./Home/components/CreateBloodRequest";
-import { useGetBloodRequestsQuery } from "../../redux/features/bloodRequest/bloodRequestApi";
+import {
+  useGetBloodRequestsQuery,
+  useGetPendingRequestsQuery,
+} from "../../redux/features/bloodRequest/bloodRequestApi";
 import Loader from "../../ui/Loader";
+import RequestCard from "../../ui/RequestCard";
 
+const urgencies = ["Emergency", "Urgent", "Normal"];
 const BloodRequests = () => {
   const {
     data: bloodRequests,
     isLoading,
     isFetching,
-  } = useGetBloodRequestsQuery();
+  } = useGetPendingRequestsQuery();
 
   // Modal States
   const [createRequest, setCreateRequest] = useState(false);
@@ -34,12 +39,14 @@ const BloodRequests = () => {
   const [params, setParams] = useState({
     bloodGroup: "",
     district: "",
+    urgency: "",
   });
 
   // This state holds the values that are currently being applied to the list
   const [activeParams, setActiveParams] = useState({
     bloodGroup: "",
     district: "",
+    urgency: "",
   });
 
   const sortedDistricts = useMemo(
@@ -49,7 +56,7 @@ const BloodRequests = () => {
 
   // Filter Logic triggered only by activeParams
   const filteredRequests = useMemo(() => {
-    const baseRequests = bloodRequests?.requests || [];
+    const baseRequests = bloodRequests?.data || [];
     return baseRequests.filter((req) => {
       const matchGroup = activeParams.bloodGroup
         ? req.bloodGroup === activeParams.bloodGroup
@@ -57,7 +64,10 @@ const BloodRequests = () => {
       const matchDistrict = activeParams.district
         ? req.district === activeParams.district
         : true;
-      return matchGroup && matchDistrict;
+      const matchUrgency = activeParams.urgency
+        ? req.urgency.toLowerCase() === activeParams.urgency.toLowerCase()
+        : true;
+      return matchGroup && matchDistrict && matchUrgency;
     });
   }, [activeParams, bloodRequests]);
 
@@ -74,7 +84,7 @@ const BloodRequests = () => {
       <div className="bg-[var(--color-surface-card)] border border-[var(--color-border-default)] rounded-[var(--radius-xl)] p-2 shadow-sm">
         <form
           onSubmit={handleSearchTrigger}
-          className="grid grid-cols-1 md:grid-cols-3 gap-2"
+          className="grid grid-cols-1 md:grid-cols-4 gap-2"
         >
           <div className="p-3 space-y-1">
             <Select
@@ -93,8 +103,24 @@ const BloodRequests = () => {
               ))}
             </Select>
           </div>
-
-          <div className="p-3 space-y-1 border-t md:border-t-0 md:border-l border-[var(--color-border-default)]">
+          <div className="p-3 space-y-1">
+            <Select
+              label="Urgency"
+              icon={Droplet}
+              value={params.urgency}
+              onChange={(e) =>
+                setParams({ ...params, urgency: e.target.value })
+              }
+            >
+              <option value="">All Urgencies</option>
+              {urgencies.map((u) => (
+                <option key={u} value={u}>
+                  {u}
+                </option>
+              ))}
+            </Select>
+          </div>
+          <div className="p-3 space-y-1 ">
             <Select
               label="District"
               icon={MapPin}
@@ -115,7 +141,7 @@ const BloodRequests = () => {
           <button
             type="submit"
             disabled={isFetching}
-            className="flex items-center justify-center gap-2 transition-all bg-primary-600 rounded-md active:scale-95 h-full "
+            className="flex items-center justify-center min-h-8 mx-3 gap-2 transition-all bg-primary-600 rounded-md active:scale-95 h-full "
           >
             <Search size={16} strokeWidth={3} />
             <span className="text-[10px] font-black uppercase tracking-[0.2em]">
@@ -176,79 +202,5 @@ const BloodRequests = () => {
     </div>
   );
 };
-
-const RequestCard = React.memo(({ req, onView, onDonate }) => {
-  const urgencyConfig = {
-    emergency: "bg-red-50 border-red-200 text-red-700",
-    urgent: "bg-orange-50 border-orange-200 text-orange-700",
-    normal: "bg-emerald-50 border-emerald-200 text-emerald-700",
-    default: "bg-slate-50 border-slate-200 text-slate-700",
-  };
-
-  return (
-    <div className="group bg-[var(--color-surface-card)] border border-[var(--color-border-default)] hover:border-[var(--color-primary-600)] rounded-[var(--radius-xl)] p-5 transition-all flex flex-col gap-6">
-      <div className="flex items-center gap-5">
-        <div className="w-14 h-14 rounded-xl bg-[var(--color-primary-50)] border border-[var(--color-primary-100)] flex flex-col items-center justify-center shrink-0">
-          <span className="text-lg font-black text-[var(--color-primary-600)]">
-            {req.bloodGroup}
-          </span>
-          <Droplet
-            size={10}
-            className="text-[var(--color-primary-600)] fill-current"
-          />
-        </div>
-        <div className="space-y-1 overflow-hidden">
-          <div className="flex items-center gap-2">
-            <h3 className="font-bold text-base text-[var(--color-content-primary)] truncate">
-              {req.recipientName}
-            </h3>
-            <span
-              className={`text-[9px] font-black uppercase tracking-[0.15em] px-2 py-0.5 rounded-md border ${urgencyConfig[req.urgency?.toLowerCase()] || urgencyConfig.default}`}
-            >
-              {req.urgency || "Normal"}
-            </span>
-          </div>
-          <div className="flex items-center gap-1.5 text-[12px] text-[var(--color-content-muted)] opacity-80">
-            <MapPin size={12} className="text-[var(--color-primary-500)]" />
-            <span className="truncate">{req.hospitalName}</span>
-          </div>
-        </div>
-      </div>
-
-      <div className="space-y-4">
-        <div className="flex items-center justify-between text-[11px] text-[var(--color-content-muted)] font-black bg-[var(--color-surface-secondary)] p-2.5 rounded-lg uppercase tracking-widest">
-          <div className="flex items-center gap-1.5">
-            <Calendar size={13} />{" "}
-            {new Date(req.donationDate).toLocaleDateString()}
-          </div>
-          <div className="flex items-center gap-1.5 border-l border-[var(--color-border-default)] pl-3">
-            <Clock size={13} /> {req.donationTime}
-          </div>
-        </div>
-
-        <div className="flex items-center gap-2">
-          <Button
-            onClick={onView}
-            variant="secondary"
-            className="flex-1 h-9 text-[10px] uppercase font-black"
-          >
-            Details
-          </Button>
-          <Button
-            onClick={onDonate}
-            variant="primary"
-            className="flex-[1.5] h-9 text-[10px] uppercase font-black"
-          >
-            Donate Now{" "}
-            <ChevronRight
-              size={14}
-              className="ml-1 group-hover:translate-x-1 transition-transform"
-            />
-          </Button>
-        </div>
-      </div>
-    </div>
-  );
-});
 
 export default BloodRequests;

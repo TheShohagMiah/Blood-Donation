@@ -24,6 +24,7 @@ const RequestViewModal = ({ data, onClose }) => {
   const {
     _id,
     bloodGroup,
+    requester,
     recipientName,
     hospitalName,
     fullAddress,
@@ -35,7 +36,6 @@ const RequestViewModal = ({ data, onClose }) => {
     message,
     urgency,
   } = data;
-
   // Industrial Urgency Mapping
   const getUrgencyStyles = (level) => {
     const status = level?.toLowerCase();
@@ -100,7 +100,7 @@ const RequestViewModal = ({ data, onClose }) => {
               <div className="flex items-center gap-2 text-[var(--color-content-muted)]">
                 <User size={14} />
                 <span className="text-xs font-medium">
-                  Requested via Portal
+                  Requested via {requester?.name}
                 </span>
               </div>
             </div>

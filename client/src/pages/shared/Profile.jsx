@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
   User,
   ShieldCheck,
@@ -28,7 +28,7 @@ const Profile = () => {
   const { user } = useSelector((state) => state.auth);
 
   const [updateProfile] = useUpdateProfileMutation();
-  const [isEditing, setIsEditing] = React.useState(false);
+  const [isEditing, setIsEditing] = useState(false);
 
   const {
     register,
@@ -43,6 +43,7 @@ const Profile = () => {
       district: "",
       upazila: "",
       bloodGroup: "",
+      email: "",
       avatar: "",
     },
   });
@@ -67,6 +68,7 @@ const Profile = () => {
     if (user) {
       reset({
         name: user.name || "",
+        email: user.email || "",
         district: user.district || "",
         upazila: user.upazila || "",
         bloodGroup: user.bloodGroup || "",
@@ -93,6 +95,7 @@ const Profile = () => {
         upazila: data.upazila,
         bloodGroup: data.bloodGroup,
         avatar: data.avatar,
+        email: data.email,
       };
       await updateProfile(profileData).unwrap();
       setIsEditing(false);
@@ -199,6 +202,14 @@ const Profile = () => {
                 {...register("name", { required: "Name is required" })}
                 disabled={!isEditing}
                 error={errors?.name?.message}
+              />
+              <Input
+                label="Email"
+                type="email"
+                readOnly={true}
+                {...register("email", { required: "Email is required" })}
+                disabled={!isEditing}
+                error={errors?.email?.message}
               />
               <Select
                 label="Blood Group"
