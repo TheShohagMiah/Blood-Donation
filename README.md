@@ -55,24 +55,6 @@ BloodDonation/
 - Search for donors by group and location
 - Manage users and requests from the dashboard
 
-## API Base Route
-
-The backend exposes its API from:
-
-```text
-/api
-```
-
-Main route groups:
-
-- `/api/auth`
-- `/api/requests`
-- `/api/donations`
-
-=======
-
-> > > > > > > 4c71af19148922cf8ec4138a2dfee269475d17b1
-
 ## GitHub Description Suggestion
 
 Full-stack blood donation management platform built with React, Node.js, Express, and MongoDB.
