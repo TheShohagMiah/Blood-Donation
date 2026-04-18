@@ -15,6 +15,7 @@ import Button from "../../ui/Button";
 import { useGetDonorsQuery } from "../../redux/features/isAuth/authApi";
 import { formatDate } from "../../../lib/formateDate";
 import DonorCard from "../../ui/DonorCard";
+import Loader from "../../ui/Loader";
 
 const bloodGroups = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"];
 
@@ -68,13 +69,7 @@ const FindDonors = () => {
   };
 
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[var(--color-content-muted)]">
-          Loading donor registry...
-        </p>
-      </div>
-    );
+    return <Loader />;
   }
   return (
     <div className="flex flex-col lg:flex-row gap-8 animate-in fade-in duration-500 pb-20">

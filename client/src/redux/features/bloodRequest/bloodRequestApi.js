@@ -18,31 +18,13 @@ export const bloodRequestApi = createApi({
   tagTypes: ["BloodRequests"],
 
   endpoints: (builder) => ({
-    getBloodRequests: builder.query({
+    getAllBloodRequests: builder.query({
       query: () => "/",
     }),
 
     getPendingRequests: builder.query({
       query: () => "/pending",
     }),
-
-    // // Public Creation with Protection
-    // createBloodRequest: builder.mutation({
-    //   query: (requestData) => {
-    //     // Honeypot Check: If the hidden 'website' field is filled, it's a bot.
-    //     // You should add an invisible input named 'website' in your CreateBloodRequest form.
-    //     if (requestData.website) {
-    //       throw new Error("Bot detected");
-    //     }
-
-    //     return {
-    //       url: "/",
-    //       method: "POST",
-    //       body: requestData,
-    //     };
-    //   },
-    //   invalidatesTags: [{ type: "BloodRequests", id: "LIST" }],
-    // }),
 
     createBloodRequest: builder.mutation({
       queryFn: async (requestData, _api, _extraOptions, baseQuery) => {
@@ -85,7 +67,7 @@ export const bloodRequestApi = createApi({
 });
 
 export const {
-  useGetBloodRequestsQuery,
+  useGetAllBloodRequestsQuery,
   useGetPendingRequestsQuery,
   useCreateBloodRequestMutation,
   useUpdateBloodRequestMutation,

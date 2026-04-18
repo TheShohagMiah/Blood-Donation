@@ -1,5 +1,5 @@
 import React, { useEffect } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, Controller } from "react-hook-form";
 import {
   X,
   Clock,
@@ -21,11 +21,14 @@ const DonationModal = ({
   showName,
   showEmail,
 }) => {
-  const [createDonation, { isSuccess, error }] = useCreateDonationMutation();
+  const [createDonation, { isSuccess }] = useCreateDonationMutation();
+
   const {
     register,
     handleSubmit,
     reset,
+    control,
+    setValue,
     formState: { errors, isSubmitting },
   } = useForm({
     defaultValues: {
@@ -36,6 +39,12 @@ const DonationModal = ({
       email: "",
     },
   });
+
+  // Pre-fill readonly fields properly via setValue
+  useEffect(() => {
+    if (showName) setValue("name", showName);
+    if (showEmail) setValue("email", showEmail);
+  }, [showName, showEmail, setValue]);
 
   const handleDonationSubmit = async (data) => {
     try {
@@ -96,7 +105,7 @@ const DonationModal = ({
 
         {/* Form Body */}
         <div className="p-8 space-y-6">
-          {/* ✅ FIXED optional fields */}
+          {/* Readonly pre-filled fields */}
           {(showName || showEmail) && (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
               {showName && (
@@ -104,21 +113,19 @@ const DonationModal = ({
                   label="Name"
                   icon={User2}
                   placeholder="Your name"
-                  value={showName}
-                  readOnly={true}
-                  {...register("name")}
+                  readOnly
                   error={errors.name?.message}
+                  {...register("name")}
                 />
               )}
               {showEmail && (
                 <Input
                   label="Email"
                   icon={Mail}
-                  value={showEmail}
-                  readOnly={true}
                   placeholder="Your email"
-                  {...register("email")}
+                  readOnly
                   error={errors.email?.message}
+                  {...register("email")}
                 />
               )}
             </div>
@@ -126,15 +133,24 @@ const DonationModal = ({
 
           {/* Status & Arrival */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-            <Select
-              label="Your Status"
-              {...register("status", { required: "Required" })}
-              error={errors.status?.message}
-            >
-              <option value="interested">Interested</option>
-              <option value="on-the-way">On the way</option>
-              <option value="at-hospital">Already at Hospital</option>
-            </Select>
+            <Controller
+              name="status"
+              control={control}
+              rules={{ required: "Required" }}
+              render={({ field }) => (
+                <Select
+                  label="Your Status"
+                  error={errors.status?.message}
+                  value={field.value}
+                  onChange={(e) => field.onChange(e.target.value)}
+                  onBlur={field.onBlur}
+                >
+                  <option value="interested">Interested</option>
+                  <option value="on-the-way">On the way</option>
+                  <option value="at-hospital">Already at Hospital</option>
+                </Select>
+              )}
+            />
 
             <Input
               label="Arrival Time"
@@ -154,7 +170,6 @@ const DonationModal = ({
               />
               Message to Recipient
             </label>
-
             <textarea
               {...register("message", {
                 required: "Please provide a short message",
@@ -163,7 +178,6 @@ const DonationModal = ({
               placeholder="e.g. I am O+ and starting now..."
               className="w-full min-h-[120px] p-4 bg-[var(--color-surface-main)] border border-[var(--color-border-default)] rounded-[var(--radius-xl)] text-sm focus:outline-none focus:border-[var(--color-primary-600)] transition-all resize-none shadow-sm placeholder:text-[var(--color-content-muted)]"
             />
-
             {errors.message && (
               <p className="text-[11px] font-medium text-red-500 flex items-center gap-1">
                 <X size={12} /> {errors.message.message}
@@ -191,7 +205,6 @@ const DonationModal = ({
           >
             Cancel
           </Button>
-
           <Button
             type="submit"
             variant="primary"

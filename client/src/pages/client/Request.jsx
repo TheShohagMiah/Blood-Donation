@@ -1,13 +1,5 @@
-import React, { useMemo, useState, useCallback } from "react";
-import {
-  Search,
-  MapPin,
-  Calendar,
-  Droplet,
-  ChevronRight,
-  Clock,
-  Plus,
-} from "lucide-react";
+import React, { useMemo, useState } from "react";
+import { Search, MapPin, Droplet, Plus } from "lucide-react";
 import { districts } from "../../data/districts";
 import { bloodGroups } from "../../data/bloodGroups";
 import Select from "../../ui/Select";
@@ -15,15 +7,16 @@ import Button from "../../ui/Button";
 import DonationModal from "../../ui/DonationModal";
 import RequestViewModal from "../../ui/RequestViewModal";
 import CreateBloodRequest from "./Home/components/CreateBloodRequest";
-import {
-  useGetBloodRequestsQuery,
-  useGetPendingRequestsQuery,
-} from "../../redux/features/bloodRequest/bloodRequestApi";
-import Loader from "../../ui/Loader";
+import { useGetPendingRequestsQuery } from "../../redux/features/bloodRequest/bloodRequestApi";
 import RequestCard from "../../ui/RequestCard";
+import { useSelector } from "react-redux";
+import { Loader } from "../../ui/TextBlinkLoader";
 
 const urgencies = ["Emergency", "Urgent", "Normal"];
+
 const BloodRequests = () => {
+  const { user } = useSelector((state) => state.auth);
+
   const {
     data: bloodRequests,
     isLoading,
@@ -35,14 +28,14 @@ const BloodRequests = () => {
   const [viewRequest, setViewRequest] = useState(null);
   const [selectedRequest, setSelectedRequest] = useState(null);
 
-  // Search/Filter State Logic
+  // Form input state
   const [params, setParams] = useState({
     bloodGroup: "",
     district: "",
     urgency: "",
   });
 
-  // This state holds the values that are currently being applied to the list
+  // Applied filters state
   const [activeParams, setActiveParams] = useState({
     bloodGroup: "",
     district: "",
@@ -54,33 +47,40 @@ const BloodRequests = () => {
     [],
   );
 
-  // Filter Logic triggered only by activeParams
+  // Filtering logic
   const filteredRequests = useMemo(() => {
     const baseRequests = bloodRequests?.data || [];
+
     return baseRequests.filter((req) => {
       const matchGroup = activeParams.bloodGroup
         ? req.bloodGroup === activeParams.bloodGroup
         : true;
+
       const matchDistrict = activeParams.district
         ? req.district === activeParams.district
         : true;
+
       const matchUrgency = activeParams.urgency
         ? req.urgency.toLowerCase() === activeParams.urgency.toLowerCase()
         : true;
+
       return matchGroup && matchDistrict && matchUrgency;
     });
   }, [activeParams, bloodRequests]);
 
+  // Trigger filter manually
   const handleSearchTrigger = (e) => {
     e.preventDefault();
     setActiveParams(params);
   };
 
-  if (isLoading) return <Loader />;
+  if (isLoading) {
+    return <Loader />;
+  }
 
   return (
     <div className="space-y-8 animate-in fade-in duration-700 pb-10">
-      {/* Search Page Style Filter Bar */}
+      {/* Filter Bar */}
       <div className="bg-[var(--color-surface-card)] border border-[var(--color-border-default)] rounded-[var(--radius-xl)] p-2 shadow-sm">
         <form
           onSubmit={handleSearchTrigger}
@@ -92,7 +92,10 @@ const BloodRequests = () => {
               icon={Droplet}
               value={params.bloodGroup}
               onChange={(e) =>
-                setParams({ ...params, bloodGroup: e.target.value })
+                setParams((prev) => ({
+                  ...prev,
+                  bloodGroup: e.target.value,
+                }))
               }
             >
               <option value="">All Groups</option>
@@ -103,13 +106,17 @@ const BloodRequests = () => {
               ))}
             </Select>
           </div>
+
           <div className="p-3 space-y-1">
             <Select
               label="Urgency"
               icon={Droplet}
               value={params.urgency}
               onChange={(e) =>
-                setParams({ ...params, urgency: e.target.value })
+                setParams((prev) => ({
+                  ...prev,
+                  urgency: e.target.value,
+                }))
               }
             >
               <option value="">All Urgencies</option>
@@ -120,13 +127,17 @@ const BloodRequests = () => {
               ))}
             </Select>
           </div>
-          <div className="p-3 space-y-1 ">
+
+          <div className="p-3 space-y-1">
             <Select
               label="District"
               icon={MapPin}
               value={params.district}
               onChange={(e) =>
-                setParams({ ...params, district: e.target.value })
+                setParams((prev) => ({
+                  ...prev,
+                  district: e.target.value,
+                }))
               }
             >
               <option value="">All Districts</option>
@@ -141,7 +152,7 @@ const BloodRequests = () => {
           <button
             type="submit"
             disabled={isFetching}
-            className="flex items-center justify-center min-h-8 mx-3 gap-2 transition-all bg-primary-600 rounded-md active:scale-95 h-full "
+            className="flex items-center justify-center min-h-8 mx-3 gap-2 transition-all bg-primary-600 rounded-md active:scale-95 h-full"
           >
             <Search size={16} strokeWidth={3} />
             <span className="text-[10px] font-black uppercase tracking-[0.2em]">
@@ -151,11 +162,13 @@ const BloodRequests = () => {
         </form>
       </div>
 
+      {/* Results */}
       <div className="space-y-6">
         <div className="flex justify-between items-center">
           <h2 className="text-[11px] font-black uppercase tracking-[0.2em] text-[var(--color-content-muted)]">
             Active Requests Identified ({filteredRequests.length})
           </h2>
+
           <Button
             onClick={() => setCreateRequest(true)}
             variant="primary"
@@ -165,7 +178,6 @@ const BloodRequests = () => {
           </Button>
         </div>
 
-        {/* Results Grid */}
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
           {filteredRequests.length > 0 ? (
             filteredRequests.map((req) => (
@@ -191,11 +203,17 @@ const BloodRequests = () => {
         onClose={() => setViewRequest(null)}
         data={viewRequest}
       />
-      <DonationModal
-        isOpen={!!selectedRequest}
-        selectedRequest={selectedRequest}
-        onClose={() => setSelectedRequest(null)}
-      />
+
+      {selectedRequest && (
+        <DonationModal
+          showName={user?.name || ""}
+          showEmail={user?.email || ""}
+          isOpen={!!selectedRequest}
+          selectedRequest={selectedRequest}
+          onClose={() => setSelectedRequest(null)}
+        />
+      )}
+
       {createRequest && (
         <CreateBloodRequest onClose={() => setCreateRequest(false)} />
       )}

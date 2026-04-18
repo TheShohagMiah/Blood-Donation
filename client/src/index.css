@@ -148,10 +148,10 @@
    Brand/Primary scale stays constant.
 ───────────────────────────────────────── */
 .dark {
-  --color-surface-primary:   #0a0a0a;
+  --color-surface-primary:   #0A0A0A;
   --color-surface-secondary: #111113;   /* was #393E46 — too light, inconsistent with #0a0a0a */
   --color-surface-tertiary:  #1a1a1e;
-  --color-surface-card:      #171717;
+  --color-surface-card:      #111111;  /* cards need 171717 to be darker than secondary bg for contrast */
   --color-surface-muted:     #27272a;   /* dark equivalent of light #e9ecef */
   --color-surface-elevated:  #1f1f23;   /* modals sit slightly above card in dark */
   --color-surface-overlay:   rgba(0, 0, 0, 0.75);
@@ -452,4 +452,16 @@
     from { opacity: 0; transform: scale(0.95); }
     to   { opacity: 1; transform: scale(1); }
   }
+}
+
+select:not(:-internal-list-box):not([multiple]) option {
+  padding: 0.5rem 1rem;
+  margin-top: 0.25rem;
+  border-radius: 20px;
+}
+
+select:not(:-internal-list-box) option {
+  background-color: var(--color-surface-card);
+  color: var(--color-content-primary);
+  border-radius: 30px !important;
 }

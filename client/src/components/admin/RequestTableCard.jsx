@@ -40,7 +40,7 @@ const RequestTableRow = ({
     setSelectedId((prev) => (prev === item._id ? null : item._id));
   };
 
-  const isInProgress = item.status === "In Progress";
+  const isInProgress = item.status === "in-progress";
 
   return (
     <tr className="hover:bg-[var(--color-surface-tertiary)]/20 transition-colors">
@@ -93,7 +93,7 @@ const RequestTableRow = ({
             {formatDate(item.donationDate)}
           </span>
           <span className="text-[10px] text-[var(--color-content-muted)] flex items-center gap-1 font-bold">
-            <Clock size={12} /> {formatDateTime(item.donationTime)}
+            <Clock size={12} /> {item.donationTime}
           </span>
         </div>
       </td>

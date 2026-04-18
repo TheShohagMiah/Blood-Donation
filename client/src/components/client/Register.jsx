@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, Controller } from "react-hook-form";
 import { Link, useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import {
@@ -8,7 +8,6 @@ import {
   Lock,
   Droplet,
   ArrowRight,
-  Camera,
 } from "lucide-react";
 
 import Input from "../../ui/Input";
@@ -22,11 +21,11 @@ import { BackgroundGradient } from "../ui/background-gradient";
 const RegisterForm = () => {
   const navigate = useNavigate();
   const [registerUser, { isLoading, isSuccess }] = useRegistrationMutation();
-  const [avatarPreview, setAvatarPreview] = useState(null);
 
   const {
     register,
     handleSubmit,
+    control,
     formState: { errors },
     watch,
     setValue,
@@ -42,26 +41,13 @@ const RegisterForm = () => {
   const selectedDistrictName = watch("district");
   const password = watch("password");
 
-  // // Handle Avatar Preview & Memory Cleanup
-  // const handleAvatarChange = (e) => {
-  //   const file = e.target.files[0];
-  //   if (file) {
-  //     if (avatarPreview) URL.revokeObjectURL(avatarPreview);
-  //     setAvatarPreview(URL.createObjectURL(file));
-  //     setValue("avatar", file);
-  //   }
-  // };
-
-  // useEffect(() => {
-  //   return () => {
-  //     if (avatarPreview) URL.revokeObjectURL(avatarPreview);
-  //   };
-  // }, [avatarPreview]);
+  // Reset upazila when district changes
+  useEffect(() => {
+    setValue("upazila", "");
+  }, [selectedDistrictName, setValue]);
 
   useEffect(() => {
-    if (isSuccess) {
-      navigate("/login");
-    }
+    if (isSuccess) navigate("/login");
   }, [isSuccess, navigate]);
 
   const filteredUpazilas = upazilas
@@ -73,13 +59,6 @@ const RegisterForm = () => {
 
   const onSubmit = async (data) => {
     try {
-      // const formData = new FormData();
-      // Object.keys(data).forEach((key) => {
-      //   if (key !== "confirmPassword") {
-      //     formData.append(key, data[key]);
-      //   }
-      // });
-
       await registerUser(data).unwrap();
     } catch (err) {
       toast.error(err?.data?.message || "Registration failed.");
@@ -99,35 +78,7 @@ const RegisterForm = () => {
         </header>
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
-          {/* ✅ Avatar Upload Section */}
-          {/* <div className="flex flex-col items-center justify-center space-y-4">
-            <div className="relative group">
-              <div className="w-24 h-24 rounded-full border-2 border-dashed border-[var(--color-border-default)] flex items-center justify-center overflow-hidden bg-[var(--color-surface-muted)] transition-all group-hover:border-red-500/50">
-                {avatarPreview ? (
-                  <img
-                    src={avatarPreview}
-                    alt="Preview"
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <UserIcon className="w-10 h-10 text-[var(--color-content-muted)]" />
-                )}
-              </div>
-              <label className="absolute bottom-0 right-0 p-2 bg-red-600 rounded-full text-white cursor-pointer shadow-lg hover:bg-red-700 transition-transform active:scale-95">
-                <Camera size={14} />
-                <input
-                  type="file"
-                  className="hidden"
-                  accept="image/*"
-                  onChange={handleAvatarChange}
-                />
-              </label>
-            </div>
-            <span className="text-[9px] font-black uppercase tracking-widest text-[var(--color-content-muted)]">
-              Profile Image (Optional)
-            </span>
-          </div> */}
-
+          {/* Name & Email */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <Input
               label="Full Name"
@@ -148,64 +99,103 @@ const RegisterForm = () => {
             />
           </div>
 
+          {/* Blood Group & Role */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <Select
-              label="Blood Group"
-              icon={Droplet}
-              error={errors.bloodGroup?.message}
-              {...register("bloodGroup", { required: "Medical data required" })}
-            >
-              <option value="">Select Group</option>
-              {["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"].map((g) => (
-                <option key={g} value={g}>
-                  {g}
-                </option>
-              ))}
-            </Select>
+            <Controller
+              name="bloodGroup"
+              control={control}
+              rules={{ required: "Medical data required" }}
+              render={({ field }) => (
+                <Select
+                  label="Blood Group"
+                  icon={Droplet}
+                  error={errors.bloodGroup?.message}
+                  value={field.value}
+                  onChange={(e) => field.onChange(e.target.value)}
+                  onBlur={field.onBlur}
+                >
+                  <option value="">Select Group</option>
+                  {["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"].map(
+                    (g) => (
+                      <option key={g} value={g}>
+                        {g}
+                      </option>
+                    ),
+                  )}
+                </Select>
+              )}
+            />
 
-            <Select
-              label="System Role"
-              error={errors.role?.message}
-              {...register("role", { required: "Role designation required" })}
-            >
-              <option value="donor">Donor</option>
-              <option value="volunteer">Volunteer</option>
-            </Select>
+            <Controller
+              name="role"
+              control={control}
+              rules={{ required: "Role designation required" }}
+              render={({ field }) => (
+                <Select
+                  label="System Role"
+                  error={errors.role?.message}
+                  value={field.value}
+                  onChange={(e) => field.onChange(e.target.value)}
+                  onBlur={field.onBlur}
+                >
+                  <option value="donor">Donor</option>
+                  <option value="volunteer">Volunteer</option>
+                </Select>
+              )}
+            />
           </div>
 
+          {/* District & Upazila */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <Select
-              label="District"
-              error={errors.district?.message}
-              {...register("district", {
-                required: "Geographic data required",
-              })}
-            >
-              <option value="">Select District</option>
-              {[...districts]
-                .sort((a, b) => a.name.localeCompare(b.name))
-                .map((d) => (
-                  <option key={d.id} value={d.name}>
-                    {d.name}
-                  </option>
-                ))}
-            </Select>
+            <Controller
+              name="district"
+              control={control}
+              rules={{ required: "Geographic data required" }}
+              render={({ field }) => (
+                <Select
+                  label="District"
+                  error={errors.district?.message}
+                  value={field.value}
+                  onChange={(e) => field.onChange(e.target.value)}
+                  onBlur={field.onBlur}
+                >
+                  <option value="">Select District</option>
+                  {[...districts]
+                    .sort((a, b) => a.name.localeCompare(b.name))
+                    .map((d) => (
+                      <option key={d.id} value={d.name}>
+                        {d.name}
+                      </option>
+                    ))}
+                </Select>
+              )}
+            />
 
-            <Select
-              label="Upazila"
-              disabled={!selectedDistrictName}
-              error={errors.upazila?.message}
-              {...register("upazila", { required: "Sub-district required" })}
-            >
-              <option value="">Select Upazila</option>
-              {filteredUpazilas.map((u) => (
-                <option key={u.id} value={u.name}>
-                  {u.name}
-                </option>
-              ))}
-            </Select>
+            <Controller
+              name="upazila"
+              control={control}
+              rules={{ required: "Sub-district required" }}
+              render={({ field }) => (
+                <Select
+                  label="Upazila"
+                  error={errors.upazila?.message}
+                  value={field.value}
+                  onChange={(e) => field.onChange(e.target.value)}
+                  onBlur={field.onBlur}
+                  disabled={!selectedDistrictName}
+                >
+                  <option value="">Select Upazila</option>
+                  {filteredUpazilas.map((u) => (
+                    <option key={u.id} value={u.name}>
+                      {u.name}
+                    </option>
+                  ))}
+                </Select>
+              )}
+            />
           </div>
 
+          {/* Passwords */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <Input
               label="Access Password"
@@ -223,6 +213,7 @@ const RegisterForm = () => {
               icon={Lock}
               error={errors.confirmPassword?.message}
               {...register("confirmPassword", {
+                required: "Required",
                 validate: (v) => v === password || "Sequence mismatch",
               })}
             />

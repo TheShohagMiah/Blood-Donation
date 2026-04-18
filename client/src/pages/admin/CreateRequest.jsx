@@ -1,5 +1,5 @@
-import React from "react";
-import { useForm } from "react-hook-form";
+import React, { useEffect } from "react";
+import { useForm, Controller } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
 import {
   Send,
@@ -29,15 +29,25 @@ const CreateBloodRequestFromDashboard = () => {
   const {
     register,
     handleSubmit,
+    control,
     watch,
+    setValue,
     formState: { errors, isSubmitting },
   } = useForm({
     defaultValues: {
       urgency: "normal",
+      bloodGroup: "",
+      district: "",
+      upazila: "",
     },
   });
 
   const selectedDistrictName = watch("district");
+
+  // Reset upazila when district changes
+  useEffect(() => {
+    setValue("upazila", "");
+  }, [selectedDistrictName, setValue]);
 
   const filteredUpazilas = upazilas
     .filter((u) => {
@@ -47,7 +57,6 @@ const CreateBloodRequestFromDashboard = () => {
     .sort((a, b) => a.name.localeCompare(b.name));
 
   const onSubmit = async (data) => {
-    console.log(data);
     try {
       await createRequest(data).unwrap();
       navigate(-1);
@@ -59,7 +68,7 @@ const CreateBloodRequestFromDashboard = () => {
   };
 
   return (
-    <div className="max-w-3xl mx-auto py-10  animate-in fade-in duration-500">
+    <div className="max-w-3xl mx-auto py-10 animate-in fade-in duration-500">
       <div className="bg-[var(--color-surface-card)] shadow-2xl border border-[var(--color-border-default)] rounded-md p-8 md:p-12">
         <header className="mb-10 text-center">
           <h2 className="text-3xl font-black uppercase tracking-tighter text-[var(--color-content-primary)]">
@@ -69,8 +78,8 @@ const CreateBloodRequestFromDashboard = () => {
             Fill in the details to post your request
           </p>
         </header>
-        <form onSubmit={handleSubmit(onSubmit)} className="w-full ">
-          {/* Body */}
+
+        <form onSubmit={handleSubmit(onSubmit)} className="w-full">
           <div className="p-6 space-y-6">
             {/* Section 1: Recipient & Contact */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
@@ -99,61 +108,101 @@ const CreateBloodRequestFromDashboard = () => {
 
             {/* Section 2: Blood & Urgency */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-              <Select
-                label="Blood Group"
-                icon={Droplets}
-                {...register("bloodGroup", { required: "Required" })}
-                error={errors.bloodGroup?.message}
-              >
-                <option value="">Select Group</option>
-                {["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"].map((g) => (
-                  <option key={g} value={g}>
-                    {g}
-                  </option>
-                ))}
-              </Select>
-              <Select
-                label="Urgency Level"
-                icon={AlertCircle}
-                {...register("urgency", { required: "Required" })}
-                error={errors.urgency?.message}
-              >
-                <option value="normal">Normal</option>
-                <option value="urgent">Urgent (Within 24h)</option>
-                <option value="emergency">Emergency (Immediate)</option>
-              </Select>
+              <Controller
+                name="bloodGroup"
+                control={control}
+                rules={{ required: "Required" }}
+                render={({ field }) => (
+                  <Select
+                    label="Blood Group"
+                    icon={Droplets}
+                    error={errors.bloodGroup?.message}
+                    value={field.value}
+                    onChange={(e) => field.onChange(e.target.value)}
+                    onBlur={field.onBlur}
+                  >
+                    <option value="">Select Group</option>
+                    {["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"].map(
+                      (g) => (
+                        <option key={g} value={g}>
+                          {g}
+                        </option>
+                      ),
+                    )}
+                  </Select>
+                )}
+              />
+
+              <Controller
+                name="urgency"
+                control={control}
+                rules={{ required: "Required" }}
+                render={({ field }) => (
+                  <Select
+                    label="Urgency Level"
+                    icon={AlertCircle}
+                    error={errors.urgency?.message}
+                    value={field.value}
+                    onChange={(e) => field.onChange(e.target.value)}
+                    onBlur={field.onBlur}
+                  >
+                    <option value="normal">Normal</option>
+                    <option value="urgent">Urgent (Within 24h)</option>
+                    <option value="emergency">Emergency (Immediate)</option>
+                  </Select>
+                )}
+              />
             </div>
 
             {/* Section 3: Regional Location */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-              <Select
-                label="District"
-                icon={MapPin}
-                {...register("district", { required: "Required" })}
-                error={errors.district?.message}
-              >
-                <option value="">Select District</option>
-                {[...districts]
-                  .sort((a, b) => a.name.localeCompare(b.name))
-                  .map((d) => (
-                    <option key={d.id} value={d.name}>
-                      {d.name}
-                    </option>
-                  ))}
-              </Select>
-              <Select
-                label="Upazila"
-                disabled={!selectedDistrictName}
-                {...register("upazila", { required: "Required" })}
-                error={errors.upazila?.message}
-              >
-                <option value="">Select Upazila</option>
-                {filteredUpazilas.map((u) => (
-                  <option key={u.id} value={u.name}>
-                    {u.name}
-                  </option>
-                ))}
-              </Select>
+              <Controller
+                name="district"
+                control={control}
+                rules={{ required: "Required" }}
+                render={({ field }) => (
+                  <Select
+                    label="District"
+                    icon={MapPin}
+                    error={errors.district?.message}
+                    value={field.value}
+                    onChange={(e) => field.onChange(e.target.value)}
+                    onBlur={field.onBlur}
+                  >
+                    <option value="">Select District</option>
+                    {[...districts]
+                      .sort((a, b) => a.name.localeCompare(b.name))
+                      .map((d) => (
+                        <option key={d.id} value={d.name}>
+                          {d.name}
+                        </option>
+                      ))}
+                  </Select>
+                )}
+              />
+
+              <Controller
+                name="upazila"
+                control={control}
+                rules={{ required: "Required" }}
+                render={({ field }) => (
+                  <Select
+                    label="Upazila"
+                    error={errors.upazila?.message}
+                    value={field.value}
+                    onChange={(e) => field.onChange(e.target.value)}
+                    onBlur={field.onBlur}
+                    disabled={!selectedDistrictName}
+                  >
+                    <option value="">Select Upazila</option>
+                    {filteredUpazilas.map((u) => (
+                      <option key={u.id} value={u.name}>
+                        {u.name}
+                      </option>
+                    ))}
+                  </Select>
+                )}
+              />
             </div>
 
             {/* Section 4: Physical Address */}

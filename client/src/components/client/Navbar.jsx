@@ -80,7 +80,6 @@ const Navbar = () => {
     { name: "Home", path: "/" },
     { name: "Find Donors", path: "/find-donors" },
     { name: "Requests", path: "/requests" },
-    { name: "About", path: "/about" },
   ];
 
   return (

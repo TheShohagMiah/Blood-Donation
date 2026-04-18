@@ -1,30 +1,23 @@
 import React, { useEffect } from "react";
-import { useForm } from "react-hook-form";
-import {
-  User as UserIcon,
-  Mail,
-  Lock,
-  Droplet,
-  ArrowRight,
-} from "lucide-react";
+import { useForm, Controller } from "react-hook-form";
+import { User as UserIcon, Mail, Lock, Droplet } from "lucide-react";
 import Input from "../../ui/Input";
 import Select from "../../ui/Select";
 import { districts } from "../../data/districts";
 import { upazilas } from "../../data/upazilas";
 import Button from "../../ui/Button";
-import { Link, useNavigate } from "react-router-dom";
 import { useRegistrationMutation } from "../../redux/features/isAuth/authApi";
-// Recommended for professional feedback
+import { toast } from "react-hot-toast";
 
 const AddUser = () => {
-  const navigate = useNavigate();
-  // ⚡️ Fix 1: RTK Mutation Hook returns [trigger, result]
   const [registerUser, { isLoading, isSuccess }] = useRegistrationMutation();
 
   const {
     register,
     handleSubmit,
     reset,
+    control,
+    setValue,
     formState: { errors },
     watch,
   } = useForm({
@@ -36,25 +29,35 @@ const AddUser = () => {
     },
   });
 
-  // ⚡️ Fix 2: Dynamic Filtering Logic
   const selectedDistrictName = watch("district");
   const password = watch("password");
+
+  // Reset upazila when district changes
+  useEffect(() => {
+    setValue("upazila", "");
+  }, [selectedDistrictName, setValue]);
+
+  // Navigate or show success after registration
+  useEffect(() => {
+    if (isSuccess) {
+      toast.success("User added successfully.");
+      reset();
+    }
+  }, [isSuccess, reset]);
 
   const filteredUpazilas = upazilas
     .filter((u) => {
       const dist = districts.find((d) => d.name === selectedDistrictName);
-      return dist ? u.district_id === dist.id : true;
+      return dist ? u.district_id === dist.id : false; // ← bug fix: was `true`
     })
     .sort((a, b) => a.name.localeCompare(b.name));
 
   const onSubmit = async (data) => {
     try {
-      // Remove confirmPassword before sending to server
       const { confirmPassword, ...submitData } = data;
       await registerUser(submitData).unwrap();
-      reset();
     } catch (err) {
-      console.error(err?.data?.message || "Registration failed");
+      toast.error(err?.data?.message || "Registration failed.");
     }
   };
 
@@ -71,7 +74,7 @@ const AddUser = () => {
         </header>
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-          {/* Identity Group */}
+          {/* Identity */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <Input
               label="Full Name"
@@ -90,72 +93,113 @@ const AddUser = () => {
             />
           </div>
 
-          {/* Medical & Role Group */}
+          {/* Medical & Role */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <Select
-              label="Blood Group"
-              icon={Droplet}
-              error={errors.bloodGroup?.message}
-              {...register("bloodGroup", { required: "Select blood group" })}
-            >
-              <option value="">Select Group</option>
-              {["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"].map((g) => (
-                <option key={g} value={g}>
-                  {g}
-                </option>
-              ))}
-            </Select>
+            <Controller
+              name="bloodGroup"
+              control={control}
+              rules={{ required: "Select blood group" }}
+              render={({ field }) => (
+                <Select
+                  label="Blood Group"
+                  icon={Droplet}
+                  error={errors.bloodGroup?.message}
+                  value={field.value}
+                  onChange={(e) => field.onChange(e.target.value)}
+                  onBlur={field.onBlur}
+                >
+                  <option value="">Select Group</option>
+                  {["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"].map(
+                    (g) => (
+                      <option key={g} value={g}>
+                        {g}
+                      </option>
+                    ),
+                  )}
+                </Select>
+              )}
+            />
 
-            <Select
-              label="Role"
-              error={errors.role?.message}
-              {...register("role", { required: "Role is required" })}
-            >
-              <option value="donor">Donor</option>
-              <option value="volunteer">Volunteer</option>
-            </Select>
+            <Controller
+              name="role"
+              control={control}
+              rules={{ required: "Role is required" }}
+              render={({ field }) => (
+                <Select
+                  label="Role"
+                  error={errors.role?.message}
+                  value={field.value}
+                  onChange={(e) => field.onChange(e.target.value)}
+                  onBlur={field.onBlur}
+                >
+                  <option value="donor">Donor</option>
+                  <option value="volunteer">Volunteer</option>
+                </Select>
+              )}
+            />
           </div>
 
-          {/* Location Group - Dynamic */}
+          {/* Location */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <Select
-              label="District"
-              error={errors.district?.message}
-              {...register("district", { required: "Select district" })}
-            >
-              <option value="">Select District</option>
-              {[...districts]
-                .sort((a, b) => a.name.localeCompare(b.name))
-                .map((d) => (
-                  <option key={d.id} value={d.name}>
-                    {d.name}
-                  </option>
-                ))}
-            </Select>
+            <Controller
+              name="district"
+              control={control}
+              rules={{ required: "Select district" }}
+              render={({ field }) => (
+                <Select
+                  label="District"
+                  error={errors.district?.message}
+                  value={field.value}
+                  onChange={(e) => field.onChange(e.target.value)}
+                  onBlur={field.onBlur}
+                >
+                  <option value="">Select District</option>
+                  {[...districts]
+                    .sort((a, b) => a.name.localeCompare(b.name))
+                    .map((d) => (
+                      <option key={d.id} value={d.name}>
+                        {d.name}
+                      </option>
+                    ))}
+                </Select>
+              )}
+            />
 
-            <Select
-              label="Upazila"
-              disabled={!selectedDistrictName}
-              error={errors.upazila?.message}
-              {...register("upazila", { required: "Select upazila" })}
-            >
-              <option value="">Select Upazila</option>
-              {filteredUpazilas.map((u) => (
-                <option key={u.id} value={u.name}>
-                  {u.name}
-                </option>
-              ))}
-            </Select>
+            <Controller
+              name="upazila"
+              control={control}
+              rules={{ required: "Select upazila" }}
+              render={({ field }) => (
+                <Select
+                  label="Upazila"
+                  error={errors.upazila?.message}
+                  value={field.value}
+                  onChange={(e) => field.onChange(e.target.value)}
+                  onBlur={field.onBlur}
+                  disabled={!selectedDistrictName}
+                >
+                  <option value="">Select Upazila</option>
+                  {filteredUpazilas.map((u) => (
+                    <option key={u.id} value={u.name}>
+                      {u.name}
+                    </option>
+                  ))}
+                </Select>
+              )}
+            />
           </div>
 
-          {/* Security Group */}
+          {/* Security */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <Input
               label="Access Password"
               type="password"
               icon={Lock}
               error={errors.password?.message}
-              {...register("password", { required: "Required", minLength: 8 })}
+              {...register("password", {
+                required: "Required",
+                minLength: { value: 8, message: "Min 8 characters" },
+              })}
             />
             <Input
               label="Verify Password"
@@ -163,6 +207,7 @@ const AddUser = () => {
               icon={Lock}
               error={errors.confirmPassword?.message}
               {...register("confirmPassword", {
+                required: "Required",
                 validate: (v) => v === password || "Match failed",
               })}
             />

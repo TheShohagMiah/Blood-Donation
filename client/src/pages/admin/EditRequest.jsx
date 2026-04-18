@@ -1,5 +1,5 @@
 import React, { useEffect } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, Controller } from "react-hook-form";
 import { useNavigate, useParams } from "react-router-dom";
 import {
   Send,
@@ -22,10 +22,10 @@ import {
   useGetBloodRequestByIdQuery,
   useUpdateBloodRequestMutation,
 } from "../../redux/features/bloodRequest/bloodRequestApi";
+import Loader from "../../ui/Loader";
 
 const EditRequest = () => {
   const { id } = useParams();
-  console.log(useParams);
   const navigate = useNavigate();
 
   const { data: existingData, isLoading } = useGetBloodRequestByIdQuery(id);
@@ -35,10 +35,13 @@ const EditRequest = () => {
     register,
     handleSubmit,
     reset,
+    control,
     watch,
+    setValue,
     formState: { errors, isSubmitting },
   } = useForm();
 
+  // Populate form once data loads
   useEffect(() => {
     if (existingData) {
       const data = existingData.data;
@@ -51,6 +54,16 @@ const EditRequest = () => {
 
   const selectedDistrictName = watch("district");
 
+  // Reset upazila when district changes — but only after initial load
+  const isFirstRender = React.useRef(true);
+  useEffect(() => {
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      return;
+    }
+    setValue("upazila", "");
+  }, [selectedDistrictName, setValue]);
+
   const filteredUpazilas = upazilas
     .filter((u) => {
       const dist = districts.find((d) => d.name === selectedDistrictName);
@@ -61,13 +74,14 @@ const EditRequest = () => {
   const onSubmit = async (data) => {
     try {
       await updateRequest({ id, data }).unwrap();
+      toast.success("Request updated successfully.");
       navigate(-1);
     } catch (err) {
       toast.error(err?.data?.message || "Failed to update request.");
     }
   };
 
-  if (isLoading) return <p>Loading...</p>;
+  if (isLoading) return <Loader />;
 
   return (
     <div className="max-w-3xl mx-auto py-10 animate-in fade-in duration-500">
@@ -83,6 +97,7 @@ const EditRequest = () => {
 
         <form onSubmit={handleSubmit(onSubmit)} className="w-full">
           <div className="p-6 space-y-6">
+            {/* Recipient & Contact */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
               <Input
                 {...register("recipientName", { required: "Name is required" })}
@@ -107,63 +122,106 @@ const EditRequest = () => {
               />
             </div>
 
+            {/* Blood Group & Urgency */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-              <Select
-                label="Blood Group"
-                icon={Droplets}
-                {...register("bloodGroup", { required: "Required" })}
-                error={errors.bloodGroup?.message}
-              >
-                <option value="">Select Group</option>
-                {["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"].map((g) => (
-                  <option key={g} value={g}>
-                    {g}
-                  </option>
-                ))}
-              </Select>
-              <Select
-                label="Urgency Level"
-                icon={AlertCircle}
-                {...register("urgency", { required: "Required" })}
-                error={errors.urgency?.message}
-              >
-                <option value="normal">Normal</option>
-                <option value="urgent">Urgent (Within 24h)</option>
-                <option value="emergency">Emergency (Immediate)</option>
-              </Select>
+              <Controller
+                name="bloodGroup"
+                control={control}
+                rules={{ required: "Required" }}
+                render={({ field }) => (
+                  <Select
+                    label="Blood Group"
+                    icon={Droplets}
+                    error={errors.bloodGroup?.message}
+                    value={field.value ?? ""}
+                    onChange={(e) => field.onChange(e.target.value)}
+                    onBlur={field.onBlur}
+                  >
+                    <option value="">Select Group</option>
+                    {["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"].map(
+                      (g) => (
+                        <option key={g} value={g}>
+                          {g}
+                        </option>
+                      ),
+                    )}
+                  </Select>
+                )}
+              />
+
+              <Controller
+                name="urgency"
+                control={control}
+                rules={{ required: "Required" }}
+                render={({ field }) => (
+                  <Select
+                    label="Urgency Level"
+                    icon={AlertCircle}
+                    error={errors.urgency?.message}
+                    value={field.value ?? ""}
+                    onChange={(e) => field.onChange(e.target.value)}
+                    onBlur={field.onBlur}
+                  >
+                    <option value="normal">Normal</option>
+                    <option value="urgent">Urgent (Within 24h)</option>
+                    <option value="emergency">Emergency (Immediate)</option>
+                  </Select>
+                )}
+              />
             </div>
 
+            {/* District & Upazila */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-              <Select
-                label="District"
-                icon={MapPin}
-                {...register("district", { required: "Required" })}
-                error={errors.district?.message}
-              >
-                <option value="">Select District</option>
-                {[...districts]
-                  .sort((a, b) => a.name.localeCompare(b.name))
-                  .map((d) => (
-                    <option key={d.id} value={d.name}>
-                      {d.name}
-                    </option>
-                  ))}
-              </Select>
-              <Select
-                label="Upazila"
-                disabled={!selectedDistrictName}
-                {...register("upazila", { required: "Required" })}
-                error={errors.upazila?.message}
-              >
-                <option value="">Select Upazila</option>
-                {filteredUpazilas.map((u) => (
-                  <option key={u.id} value={u.name}>
-                    {u.name}
-                  </option>
-                ))}
-              </Select>
+              <Controller
+                name="district"
+                control={control}
+                rules={{ required: "Required" }}
+                render={({ field }) => (
+                  <Select
+                    label="District"
+                    icon={MapPin}
+                    error={errors.district?.message}
+                    value={field.value ?? ""}
+                    onChange={(e) => field.onChange(e.target.value)}
+                    onBlur={field.onBlur}
+                  >
+                    <option value="">Select District</option>
+                    {[...districts]
+                      .sort((a, b) => a.name.localeCompare(b.name))
+                      .map((d) => (
+                        <option key={d.id} value={d.name}>
+                          {d.name}
+                        </option>
+                      ))}
+                  </Select>
+                )}
+              />
+
+              <Controller
+                name="upazila"
+                control={control}
+                rules={{ required: "Required" }}
+                render={({ field }) => (
+                  <Select
+                    label="Upazila"
+                    error={errors.upazila?.message}
+                    value={field.value ?? ""}
+                    onChange={(e) => field.onChange(e.target.value)}
+                    onBlur={field.onBlur}
+                    disabled={!selectedDistrictName}
+                  >
+                    <option value="">Select Upazila</option>
+                    {filteredUpazilas.map((u) => (
+                      <option key={u.id} value={u.name}>
+                        {u.name}
+                      </option>
+                    ))}
+                  </Select>
+                )}
+              />
             </div>
 
+            {/* Address */}
             <div className="space-y-5">
               <Input
                 {...register("hospitalName", {
@@ -184,6 +242,7 @@ const EditRequest = () => {
               />
             </div>
 
+            {/* Schedule */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
               <Input
                 {...register("donationDate", { required: "Required" })}
@@ -201,6 +260,7 @@ const EditRequest = () => {
               />
             </div>
 
+            {/* Notes */}
             <div className="space-y-1.5">
               <label className="text-[10px] font-black uppercase tracking-widest text-[var(--color-content-muted)]">
                 Case Summary / Notes
@@ -214,7 +274,7 @@ const EditRequest = () => {
             </div>
           </div>
 
-          {/* Footer inside form */}
+          {/* Footer */}
           <div className="p-6 flex justify-end gap-3">
             <Button
               variant="secondary"

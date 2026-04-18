@@ -13,7 +13,7 @@ const Button = ({
 }) => {
   // Base styles following your design language
   const baseStyles =
-    "relative inline-flex items-center justify-center rounded-[var(--radius-md)] transition-all duration-200 active:scale-[0.98] disabled:opacity-50 disabled:pointer-events-none font-bold uppercase tracking-[0.08em] text-[11px]";
+    "relative cursor-pointer shadow-inner inline-flex items-center justify-center rounded-[var(--radius-md)] transition-all duration-200 active:scale-[0.98] disabled:opacity-50 disabled:pointer-events-none font-bold uppercase tracking-[0.08em] text-[11px]";
 
   const variants = {
     primary:

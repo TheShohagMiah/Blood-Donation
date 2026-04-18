@@ -11,12 +11,14 @@ import {
 import StatsCard from "../../ui/StatsCard";
 import { useSelector } from "react-redux";
 import { useGetStatsQuery } from "../../redux/features/isAuth/authApi";
-import {
-  useGetBloodRequestsQuery,
-  useGetPendingRequestsQuery,
-} from "../../redux/features/bloodRequest/bloodRequestApi";
+import { useGetPendingRequestsQuery } from "../../redux/features/bloodRequest/bloodRequestApi";
 import Loader from "../../ui/Loader";
 import { EncryptedText } from "../../components/ui/encrypted-text";
+import {
+  formatDate,
+  formatDateTime,
+  formatTime,
+} from "../../../lib/formateDate";
 
 // ✅ Fix 3: handle all 3 statuses
 const getStatusStyle = (status) => {
@@ -40,7 +42,7 @@ const AdminDashboard = () => {
 
   if (statsLoading || requestsLoading) return <Loader />;
 
-  const recentRequests = requestsData?.data?.slice(0, 5) || [];
+  const recentRequests = requestsData?.data?.slice(0, 3) || [];
 
   return (
     <div className="animate-in fade-in duration-500">
@@ -81,19 +83,9 @@ const AdminDashboard = () => {
         />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="">
         {/* Recent Requests Table */}
-        <div className="lg:col-span-2 bg-[var(--color-surface-card)] border border-[var(--color-border-default)] rounded-md overflow-hidden shadow-xl">
-          <div className="px-6 py-4 border-b border-[var(--color-border-default)] flex justify-between items-center">
-            <h3 className="text-[11px] font-black uppercase tracking-[0.2em] text-[var(--color-content-muted)]">
-              Recent Requests
-            </h3>
-            <MoreHorizontal
-              size={16}
-              className="text-[var(--color-content-muted)] cursor-pointer"
-            />
-          </div>
-
+        <div className=" bg-[var(--color-surface-card)] border border-[var(--color-border-default)] rounded-md overflow-hidden shadow-xl">
           <div className="overflow-x-auto">
             {recentRequests.length === 0 ? (
               <p className="px-6 py-10 text-center text-[11px] font-black uppercase tracking-widest text-[var(--color-content-muted)]">
@@ -102,12 +94,14 @@ const AdminDashboard = () => {
             ) : (
               <table className="w-full text-left">
                 <thead>
-                  <tr className="bg-[var(--color-surface-muted)]/30 text-[10px] font-bold uppercase tracking-widest text-[var(--color-content-muted)]">
-                    <th className="px-6 py-3">Recipient</th>
-                    <th className="px-6 py-3">Requester</th>
-                    <th className="px-6 py-3">Blood Group</th>
-                    <th className="px-6 py-3">Status</th>
-                    <th className="px-6 py-3 text-right">Date</th>
+                  <tr className="bg-[var(--color-surface-muted)]/30 text-xs font-bold uppercase tracking-widest text-[var(--color-content-muted)]">
+                    <th className="px-6 py-4">Recipient</th>
+                    <th className="px-6 py-4">Location</th>
+                    <th className="px-6 py-4">Hospital</th>
+                    <th className="px-6 py-4">Blood Group</th>
+                    <th className="px-6 py-4">Status</th>
+                    <th className="px-6 py-4">Date</th>
+                    <th className="px-6 py-4">Time</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[var(--color-border-default)]">
@@ -120,13 +114,14 @@ const AdminDashboard = () => {
                         {req.recipientName}
                       </td>
                       <td className="px-6 py-4 text-xs font-medium text-[var(--color-content-secondary)]">
-                        {typeof req.requester === "object"
-                          ? req.requester?.name
-                          : req.requester || "—"}
+                        {req.fullAddress || "—"}
+                      </td>
+                      <td className="px-6 py-4 text-xs font-medium text-[var(--color-content-secondary)]">
+                        {req.hospitalName || "—"}
                       </td>
                       <td className="px-6 py-4">
                         <span className="text-xs font-black text-red-600 bg-red-50 px-2 py-1 rounded-lg border border-red-100">
-                          {req.bloodGroup}
+                          {req.bloodGroup || "—"}
                         </span>
                       </td>
                       <td className="px-6 py-4">
@@ -135,59 +130,22 @@ const AdminDashboard = () => {
                           className={`text-[9px] font-black uppercase px-2 py-0.5 rounded ${getStatusStyle(req.status)}`}
                         >
                           {req.status}
+                          {req.status === "in-progress" && (
+                            <Clock size={12} className="inline-block ml-1" />
+                          )}
                         </span>
                       </td>
                       <td className="px-6 py-4 text-xs text-right text-[var(--color-content-muted)] tabular-nums">
-                        {req.donationDate
-                          ? new Date(req.donationDate).toLocaleDateString(
-                              "en-GB",
-                              {
-                                day: "2-digit",
-                                month: "short",
-                                year: "numeric",
-                              },
-                            )
-                          : "—"}
+                        {formatDate(req.donationDate)}
+                      </td>
+                      <td className="px-6 py-4 text-xs text-right text-[var(--color-content-muted)] tabular-nums">
+                        {req.donationTime}
                       </td>
                     </tr>
                   ))}
                 </tbody>
               </table>
             )}
-          </div>
-        </div>
-
-        {/* System Health Widget */}
-        <div className="space-y-6">
-          <div className="bg-[var(--color-surface-card)] border border-[var(--color-border-default)] p-6 rounded-md shadow-xl">
-            <h3 className="text-[11px] font-black uppercase tracking-[0.2em] text-[var(--color-content-muted)] mb-4">
-              System Health
-            </h3>
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2 text-xs font-bold">
-                  <CheckCircle2 size={14} className="text-green-500" /> API
-                  Gateway
-                </div>
-                <span className="text-[10px] font-bold text-green-500">
-                  99.9%
-                </span>
-              </div>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2 text-xs font-bold">
-                  <Clock size={14} className="text-amber-500" /> Database Sync
-                </div>
-                <span className="text-[10px] font-bold text-amber-500">
-                  Delayed
-                </span>
-              </div>
-            </div>
-            <div className="mt-6 pt-6 border-t border-[var(--color-border-default)]">
-              <p className="text-[10px] text-[var(--color-content-muted)] leading-relaxed">
-                Last system backup performed at{" "}
-                <span className="font-bold">14:00 UTC</span>.
-              </p>
-            </div>
           </div>
         </div>
       </div>

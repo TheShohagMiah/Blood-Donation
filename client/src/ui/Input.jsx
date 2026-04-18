@@ -1,13 +1,15 @@
-import { Eye, EyeClosed, EyeOff } from "lucide-react";
+import { Eye, EyeOff } from "lucide-react";
 import React, { useState } from "react";
 
 const Input = React.forwardRef(
   ({ label, type, error, icon: Icon, className = "", ...props }, ref) => {
     const [isPasswordVisible, setPasswordVisible] = useState(false);
 
+    const inputType =
+      type === "password" ? (isPasswordVisible ? "text" : "password") : type;
+
     return (
       <div className="w-full space-y-1 animate-in fade-in duration-300">
-        {/* Label: Small, Bold, Uppercase for maximum readability */}
         {label && (
           <label
             htmlFor={props.id || props.name}
@@ -18,51 +20,48 @@ const Input = React.forwardRef(
         )}
 
         <div className="relative group">
-          {/* Optional Icon Rendering */}
           {Icon && (
-            <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[var(--color-content-muted)] group-focus-within:text-[var(--color-primary-600)] transition-colors">
+            <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[var(--color-content-muted)] group-focus-within:text-[var(--color-primary-600)] transition-colors pointer-events-none">
               <Icon size={16} strokeWidth={2.2} />
             </div>
           )}
 
           <input
-            readOnly={props.readOnly}
-            type={
-              type === "password"
-                ? isPasswordVisible
-                  ? "text"
-                  : "password"
-                : type
-            }
+            type={inputType}
             ref={ref}
             {...props}
             className={`
-            w-full h-10 px-4 
-            ${Icon ? "pl-11" : "pl-4"}
-            bg-[var(--color-surface-card)] 
-            border border-[var(--color-border-default)] 
-            rounded-[var(--radius-md)] 
-            text-sm font-normal text-[var(--color-content-primary)] 
-            placeholder:text-[var(--color-content-muted)]/50
-            transition-all duration-200
-            hover:border-[var(--color-border-strong)]
-            focus:outline-none focus:ring-2 focus:ring-[var(--color-primary-subtle)] focus:border-[var(--color-primary-600)]
-            disabled:opacity-50 disabled:cursor-not-allowed
-            ${error ? "border-[var(--color-error-solid)] focus:ring-[var(--color-error-subtle)]" : ""}
-            ${className}
-          `}
+              w-full h-9 px-4
+              ${Icon ? "pl-11" : "pl-4"}
+              ${type === "password" ? "pr-10" : ""}
+              shadow-inner
+              bg-[var(--color-surface-card)]
+              border border-[var(--color-border-default)]
+              rounded-[var(--radius-md)]
+              text-sm font-normal text-[var(--color-content-primary)]
+              placeholder:text-[var(--color-content-muted)]/50
+              transition-all duration-200
+              hover:border-[var(--color-border-strong)]
+              focus:outline-none focus:ring-2 focus:ring-[var(--color-primary-subtle)] focus:border-[var(--color-primary-600)]
+              disabled:opacity-50 disabled:cursor-not-allowed
+              read-only:opacity-60 read-only:cursor-default read-only:hover:border-[var(--color-border-default)]
+              ${error ? "border-[var(--color-error-solid)] focus:ring-[var(--color-error-subtle)]" : ""}
+              ${className}
+            `}
           />
+
           {type === "password" && (
-            <span
-              onClick={() => setPasswordVisible((v) => !v)} // ✅ toggle here, not on input
-              className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[var(--color-content-muted)] cursor-pointer select-none"
+            <button
+              type="button"
+              onClick={() => setPasswordVisible((v) => !v)}
+              className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[var(--color-content-muted)] hover:text-[var(--color-content-primary)] transition-colors cursor-pointer select-none"
+              tabIndex={-1}
+              aria-label={isPasswordVisible ? "Hide password" : "Show password"}
             >
-              {isPasswordVisible ? <Eye size={16} /> : <EyeOff size={16} />}
-            </span>
+              {isPasswordVisible ? <EyeOff size={16} /> : <Eye size={16} />}
+            </button>
           )}
         </div>
-
-        {/* Error Message with micro-typography */}
 
         {error && (
           <p className="text-[10px] font-bold text-[var(--color-error-solid)] uppercase tracking-wide px-1">

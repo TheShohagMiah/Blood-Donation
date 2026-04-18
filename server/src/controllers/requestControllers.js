@@ -31,7 +31,6 @@ export const getRequests = async (req, res, next) => {
       bloodGroup,
       district,
       upazila,
-      status = "pending",
       page = 1,
       limit = 10,
       search,
@@ -41,7 +40,7 @@ export const getRequests = async (req, res, next) => {
     const limitNum = Math.max(1, parseInt(limit));
     const skip = (pageNum - 1) * limitNum;
 
-    const query = { status };
+    const query = {};
     if (bloodGroup) query.bloodGroup = bloodGroup;
     if (district) query.district = district;
     if (upazila) query.upazila = upazila;

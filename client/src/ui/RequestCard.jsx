@@ -1,9 +1,10 @@
 import React from "react";
 import { MapPin, Calendar, Droplet, ChevronRight, Clock } from "lucide-react";
-import { Link, Navigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import Button from "./Button";
 
 const RequestCard = React.memo(({ req, onView, onDonate }) => {
+  const navigate = useNavigate();
   const urgencyConfig = {
     emergency: "bg-red-50 border-red-200 text-red-700",
     urgent: "bg-orange-50 border-orange-200 text-orange-700",
@@ -52,22 +53,19 @@ const RequestCard = React.memo(({ req, onView, onDonate }) => {
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center justify-between gap-2">
           <Button
+            onClick={() => navigate(`/requests/${req._id}`)}
             variant="secondary"
-            className="flex-1 h-9 text-[10px] uppercase font-black"
+            className="h-9 text-[10px] uppercase font-black"
           >
-            <Link
-              to={`/requests/${req._id || req.id}`}
-              className="w-full h-full flex items-center justify-center"
-            >
-              View Details
-            </Link>
+            View Details
           </Button>
+
           <Button
             onClick={onDonate}
             variant="primary"
-            className="flex-[1.5] h-9 text-[10px] uppercase font-black"
+            className="h-9 text-[10px] uppercase font-black"
           >
             Donate Now{" "}
             <ChevronRight
