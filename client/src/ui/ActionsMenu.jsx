@@ -23,7 +23,7 @@ const ActionsMenu = ({ donation, onEdit, onDelete }) => {
       </button>
 
       {open && (
-        <div className="absolute right-0 top-9 z-20 w-44 bg-[var(--color-surface-card)] border border-[var(--color-border-default)] rounded-xl shadow-lg py-1 animate-in fade-in zoom-in-95 duration-150">
+        <div className="absolute right-0 top-9 z-20 w-44 bg-[var(--color-surface-card)] border border-[var(--color-border-default)] rounded-md shadow-lg py-1 animate-in fade-in zoom-in-95 duration-150">
           <button
             onClick={() => {
               setOpen(false);

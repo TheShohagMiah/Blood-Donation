@@ -40,12 +40,12 @@ const RequestDetails = () => {
 
         <div className="flex items-center gap-3">
           {/* Blood Group */}
-          <span className="px-4 py-2 rounded-xl bg-red-100 text-red-600 font-bold text-sm flex items-center gap-2">
+          <span className="px-4 py-2 rounded-md bg-red-100 text-red-600 font-bold text-sm flex items-center gap-2">
             <Droplets size={16} /> {request.bloodGroup}
           </span>
 
           {/* Status */}
-          <span className="px-4 py-2 rounded-xl bg-gray-100 text-gray-700 text-sm font-semibold capitalize">
+          <span className="px-4 py-2 rounded-md bg-gray-100 text-gray-700 text-sm font-semibold capitalize">
             {request.status}
           </span>
         </div>

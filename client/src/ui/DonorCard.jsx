@@ -14,7 +14,7 @@ const DonorCard = ({ donor }) => (
   <div className="bg-[var(--color-surface-card)] border border-[var(--color-border-default)] p-6 rounded-[var(--radius-xl)] hover:border-[var(--color-primary-600)] transition-all group hover:shadow-lg">
     <div className="flex justify-between items-start mb-6">
       <div className="flex items-center gap-4">
-        <div className="w-12 h-12 rounded-xl bg-[var(--color-surface-muted)] flex items-center justify-center border border-[var(--color-border-default)]">
+        <div className="w-12 h-12 rounded-md bg-[var(--color-surface-muted)] flex items-center justify-center border border-[var(--color-border-default)]">
           <ShieldCheck
             size={20}
             className={

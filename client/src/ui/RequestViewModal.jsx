@@ -162,7 +162,7 @@ const RequestViewModal = ({ data, onClose }) => {
           {/* Contact Banner */}
           <div className="bg-[var(--color-primary-600)] rounded-[var(--radius-xl)] p-5 flex items-center justify-between text-white shadow-lg shadow-primary-500/20">
             <div className="flex items-center gap-4">
-              <div className="h-12 w-12 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center">
+              <div className="h-12 w-12 bg-white/20 backdrop-blur-sm rounded-md flex items-center justify-center">
                 <Phone size={20} />
               </div>
               <div>
@@ -187,7 +187,7 @@ const RequestViewModal = ({ data, onClose }) => {
         <div className="px-8 py-6 bg-[var(--color-surface-secondary)] border-t border-[var(--color-border-default)]">
           <button
             onClick={onClose}
-            className="w-full bg-[var(--color-surface-card)] border border-[var(--color-border-strong)] hover:bg-[var(--color-surface-tertiary)] text-[var(--color-content-primary)] py-3 rounded-xl font-bold text-xs uppercase tracking-widest transition-all"
+            className="w-full bg-[var(--color-surface-card)] border border-[var(--color-border-strong)] hover:bg-[var(--color-surface-tertiary)] text-[var(--color-content-primary)] py-3 rounded-md font-bold text-xs uppercase tracking-widest transition-all"
           >
             Done
           </button>

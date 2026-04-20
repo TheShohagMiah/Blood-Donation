@@ -11,7 +11,6 @@ import {
   X,
   LogOut,
   Settings,
-  ChevronRight,
 } from "lucide-react";
 import { useLogoutMutation } from "../../redux/features/isAuth/authApi";
 import { logout } from "../../redux/slices/authSlice";
@@ -35,24 +34,23 @@ const Header = ({
 
   const profileRef = useRef(null);
   const notificationRef = useRef(null);
+  const mobileSearchRef = useRef(null);
   const location = useLocation();
 
-  // generate abbrivation in words
   const getAbbreviation = (name) => {
-    if (!name) return "S";
+    if (!name) return "U";
     return name
       .split(" ")
-      .map((word) => word[0])
+      .map((w) => w[0])
       .join("")
-      .toUpperCase();
+      .toUpperCase()
+      .slice(0, 2);
   };
-
   const abbreviation = getAbbreviation(user?.name);
-  // Generate Breadcrumbs from URL
-  const pathnames = location.pathname.split("/").filter((x) => x);
 
+  // Close dropdowns on outside click
   useEffect(() => {
-    const outSideClickHandler = (e) => {
+    const handler = (e) => {
       if (profileRef.current && !profileRef.current.contains(e.target))
         setProfileOpen(false);
       if (
@@ -61,153 +59,218 @@ const Header = ({
       )
         setNotificationOpen(false);
     };
-    document.addEventListener("mousedown", outSideClickHandler);
-    return () => document.removeEventListener("mousedown", outSideClickHandler);
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
   }, []);
 
+  // ⌘K / Ctrl+K opens search
   useEffect(() => {
-    const keyboardHandler = (e) => {
+    const handler = (e) => {
       if ((e.metaKey || e.ctrlKey) && e.key === "k") {
         e.preventDefault();
-        document.getElementById("header-search")?.focus();
-        if (window.innerWidth < 768) setMobileSearchOpen(true);
+        if (window.innerWidth >= 1024) {
+          document.getElementById("header-search")?.focus();
+        } else {
+          setMobileSearchOpen(true);
+        }
+      }
+      if (e.key === "Escape") {
+        setMobileSearchOpen(false);
+        setProfileOpen(false);
+        setNotificationOpen(false);
       }
     };
-    document.addEventListener("keydown", keyboardHandler);
-    return () => document.removeEventListener("keydown", keyboardHandler);
+    document.addEventListener("keydown", handler);
+    return () => document.removeEventListener("keydown", handler);
   }, []);
+
+  // Auto-focus mobile search input when opened
+  useEffect(() => {
+    if (mobileSearchOpen) {
+      setTimeout(() => mobileSearchRef.current?.focus(), 50);
+    }
+  }, [mobileSearchOpen]);
 
   useEffect(() => {
     document.documentElement.classList.toggle("dark", darkMode);
   }, [darkMode]);
+
+  // Close mobile search & profile on route change
+  useEffect(() => {
+    setMobileSearchOpen(false);
+    setProfileOpen(false);
+    setNotificationOpen(false);
+  }, [location.pathname]);
 
   const handleLogout = async () => {
     try {
       await userLogoutFromServer();
       dispatch(logout());
       navigate("/login", { replace: true });
-    } catch (error) {}
+    } catch {}
   };
+
+  // Shared dropdown button styles
+  const iconBtnClass =
+    "p-2 rounded-md border border-[var(--color-border-default)] hover:bg-[var(--color-surface-muted)] transition-all text-[var(--color-content-primary)]";
 
   return (
     <>
-      <header className="sticky top-0 z-40 flex items-center justify-between h-16 md:h-20 px-3 sm:px-4 md:px-6 border-b border-[var(--color-border-default)] bg-[var(--color-surface-main)]/80 backdrop-blur-md">
-        {/* LEFT */}
-        <div className="flex items-center gap-2 sm:gap-3 md:gap-4 min-w-0">
+      {/* ── Mobile Search Overlay ── */}
+      {mobileSearchOpen && (
+        <div
+          className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-start justify-center pt-20 px-4"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setMobileSearchOpen(false);
+          }}
+        >
+          <div className="relative w-full max-w-lg animate-in fade-in slide-in-from-top-4 duration-200">
+            <Search
+              size={16}
+              className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--color-content-muted)] pointer-events-none"
+            />
+            <input
+              ref={mobileSearchRef}
+              type="text"
+              placeholder="Search commands..."
+              className="w-full bg-[var(--color-surface-card)] border border-[var(--color-border-default)] py-3.5 pl-12 pr-12 rounded-2xl text-sm outline-none focus:border-[var(--color-primary-600)] shadow-2xl transition-all"
+            />
+            <button
+              onClick={() => setMobileSearchOpen(false)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 p-1.5 text-[var(--color-content-muted)] hover:bg-[var(--color-surface-muted)] rounded-lg transition-colors"
+            >
+              <X size={16} />
+            </button>
+          </div>
+        </div>
+      )}
+
+      <header className="sticky top-0 z-40 flex items-center justify-between h-16 px-3 sm:px-4 lg:px-6 border-b border-[var(--color-border-default)] bg-[var(--color-surface-main)]/80 backdrop-blur-md">
+        {/* ── LEFT: Menu toggle + breadcrumb ── */}
+        <div className="flex items-center gap-2 min-w-0">
+          {/*
+            NOTE: The hamburger/collapse button in the sidebar header handles
+            toggling. This button mirrors it for cases where the sidebar header
+            isn't visible (e.g. fully collapsed). You can remove it if the
+            sidebar already has a close/open control.
+          */}
           <button
             onClick={() =>
-              window.innerWidth < 768
-                ? setIsMobileMenuOpen(!isMobileMenuOpen)
-                : setIsCollapsed(!isCollapsed)
+              window.innerWidth < 1024
+                ? setIsMobileMenuOpen((v) => !v)
+                : setIsCollapsed((v) => !v)
             }
-            className="p-2 rounded-lg hover:bg-[var(--color-surface-muted)] transition-colors text-[var(--color-content-primary)]"
+            className="lg:hidden p-2 rounded-lg hover:bg-[var(--color-surface-muted)] transition-colors text-[var(--color-content-primary)]"
+            aria-label="Toggle menu"
           >
-            {isMobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
+            <Menu size={20} />
           </button>
-
-          {/* Breadcrumb (hide on small screens) */}
-          <div className="hidden lg:flex items-center gap-2 text-[11px] font-bold uppercase tracking-widest text-[var(--color-content-muted)] truncate">
-            <span className="hover:text-[var(--color-primary-600)] cursor-pointer transition-colors">
-              Console
-            </span>
-          </div>
-        </div>
-
-        {/* MOBILE SEARCH OVERLAY */}
-        {mobileSearchOpen && (
-          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-start justify-center pt-24 px-4">
-            <div className="relative w-full max-w-md">
+          <div className="hidden lg:flex flex-1 max-w-md mx-8">
+            <div className="relative w-full">
               <Search
-                size={16}
-                className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--color-content-muted)]"
+                size={15}
+                className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--color-content-muted)] pointer-events-none"
               />
               <input
-                autoFocus
-                id="mobile-header-search"
+                id="header-search"
                 type="text"
                 placeholder="Search commands..."
-                className="w-full bg-[var(--color-surface-muted)] border border-transparent py-3 pl-12 pr-14 rounded-xl text-sm outline-none focus:border-[var(--color-primary-600)] focus:bg-[var(--color-surface-main)] transition-all"
+                className="w-full bg-[var(--color-surface-muted)] border border-transparent py-2.5 pl-11 pr-16 rounded-md text-xs outline-none focus:border-[var(--color-primary-600)] focus:bg-[var(--color-surface-main)] transition-all"
               />
-              <button
-                onClick={() => setMobileSearchOpen(false)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 p-2 text-[var(--color-content-muted)] hover:bg-[var(--color-surface-muted)] rounded-full transition-colors"
-              >
-                <X size={16} />
-              </button>
+              <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-0.5 px-1.5 py-1 rounded-md bg-[var(--color-surface-main)] border border-[var(--color-border-default)] pointer-events-none">
+                <Command
+                  size={10}
+                  className="text-[var(--color-content-muted)]"
+                />
+                <span className="text-[9px] font-black text-[var(--color-content-muted)]">
+                  K
+                </span>
+              </div>
             </div>
-          </div>
-        )}
-
-        {/* DESKTOP SEARCH */}
-        <div className="relative hidden md:block max-w-xs lg:max-w-md w-full mx-2 lg:mx-8 border border-border-default rounded-full">
-          <Search
-            size={16}
-            className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--color-content-muted)]"
-          />
-          <input
-            id="header-search"
-            type="text"
-            placeholder="Search commands..."
-            className="w-full bg-[var(--color-surface-muted)] border border-transparent py-2.5 pl-12 pr-14 rounded-xl text-xs outline-none focus:border-[var(--color-primary-600)] focus:bg-[var(--color-surface-main)] transition-all"
-          />
-          <div className="hidden sm:flex absolute right-3 top-1/2 -translate-y-1/2 items-center gap-1 px-1.5 py-1 rounded bg-[var(--color-surface-main)] border border-[var(--color-border-default)]">
-            <Command size={10} className="text-[var(--color-content-muted)]" />
-            <span className="text-[9px] font-black text-[var(--color-content-muted)]">
-              K
-            </span>
           </div>
         </div>
 
-        {/* RIGHT */}
-        <div className="flex items-center gap-2 sm:gap-3 shrink-0">
-          {/* Theme Toggle */}
-          <button onClick={() => setDarkMode(!darkMode)} className="p-2">
-            {darkMode ? <Sun size={18} /> : <Moon size={18} />}
+        {/* ── CENTER: Desktop search ── */}
+
+        {/* ── RIGHT: actions ── */}
+        <div className="flex items-center gap-1 sm:gap-2 shrink-0">
+          {/* Search icon — mobile & tablet only */}
+          <button
+            onClick={() => setMobileSearchOpen(true)}
+            className={`lg:hidden ${iconBtnClass}`}
+            aria-label="Open search"
+          >
+            <Search size={18} />
+          </button>
+
+          {/* Theme toggle */}
+          <button
+            onClick={() => setDarkMode((v) => !v)}
+            className={iconBtnClass}
+            aria-label="Toggle theme"
+          >
+            {darkMode ? (
+              <Sun size={18} className="text-amber-400" />
+            ) : (
+              <Moon size={18} />
+            )}
           </button>
 
           {/* Notifications */}
           <div ref={notificationRef} className="relative">
             <button
-              onClick={() => setNotificationOpen(!notificationOpen)}
-              className="p-2 sm:p-2.5 rounded-xl border border-[var(--color-border-default)] hover:bg-[var(--color-surface-muted)] transition-all text-[var(--color-content-primary)] relative"
+              onClick={() => {
+                setNotificationOpen((v) => !v);
+                setProfileOpen(false);
+              }}
+              className={`relative ${iconBtnClass}`}
+              aria-label="Notifications"
             >
               <Bell size={18} />
               <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-[var(--color-primary-600)] rounded-full border-2 border-[var(--color-surface-main)]" />
             </button>
 
             {notificationOpen && (
-              <div className="absolute right-0 mt-3 w-72 sm:w-80 max-w-[90vw] bg-[var(--color-surface-card)] border border-[var(--color-border-default)] rounded-2xl shadow-xl overflow-hidden animate-in slide-in-from-top-2">
-                <div className="p-4 border-b border-[var(--color-border-default)] flex justify-between items-center">
-                  <h4 className="text-[11px] font-bold uppercase tracking-widest">
+              <div className="absolute right-0 mt-3 w-72 sm:w-80 max-w-[calc(100vw-1rem)] bg-[var(--color-surface-card)] border border-[var(--color-border-default)] rounded-2xl shadow-2xl overflow-hidden z-50 animate-in fade-in slide-in-from-top-2 duration-200">
+                <div className="px-4 py-3 border-b border-[var(--color-border-default)] flex justify-between items-center">
+                  <h4 className="text-[11px] font-black uppercase tracking-widest">
                     Notifications
                   </h4>
-                  <span className="text-[10px] text-[var(--color-primary-600)] font-bold cursor-pointer">
+                  <button className="text-[10px] text-[var(--color-primary-600)] font-bold hover:opacity-70 transition-opacity">
                     Clear All
-                  </span>
+                  </button>
                 </div>
-                <div className="p-6 sm:p-8 text-center">
+                <div className="py-8 text-center">
+                  <Bell
+                    size={28}
+                    className="mx-auto mb-3 text-[var(--color-content-muted)] opacity-20"
+                  />
                   <p className="text-xs text-[var(--color-content-muted)]">
-                    System is running smoothly. No new alerts.
+                    No new notifications
                   </p>
                 </div>
               </div>
             )}
           </div>
 
-          {/* PROFILE */}
+          {/* Profile */}
           <div ref={profileRef} className="relative">
             <button
-              onClick={() => setProfileOpen(!profileOpen)}
-              className="flex items-center gap-2 sm:gap-3 pl-1 pr-2 sm:pr-3 py-1 rounded-full border border-[var(--color-border-default)] hover:border-[var(--color-primary-600)] transition-all bg-[var(--color-surface-muted)]/50"
+              onClick={() => {
+                setProfileOpen((v) => !v);
+                setNotificationOpen(false);
+              }}
+              className="flex items-center gap-2 pl-1 pr-2 sm:pr-3 py-1 rounded-full border border-[var(--color-border-default)] hover:border-[var(--color-primary-600)] transition-all bg-[var(--color-surface-muted)]/50"
+              aria-label="Profile menu"
             >
-              <div className="w-8 h-8 rounded-full bg-[var(--color-primary-600)] flex items-center justify-center text-white font-bold text-xs">
+              {/* Avatar */}
+              <div className="w-8 h-8 rounded-full bg-[var(--color-primary-600)] flex items-center justify-center text-white font-bold text-xs shrink-0">
                 {abbreviation}
               </div>
-
-              {/* Hide text on very small screens */}
-              <div className="hidden sm:block text-left max-w-[120px] truncate">
+              {/* Name + role — hidden on small screens */}
+              <div className="hidden sm:block text-left max-w-[110px]">
                 <p className="text-xs font-bold text-[var(--color-content-primary)] leading-none truncate">
-                  {user.name}
+                  {user?.name}
                 </p>
                 <p className="text-[9px] font-bold uppercase tracking-tighter text-[var(--color-primary-600)] mt-0.5">
                   {user?.role}
@@ -216,37 +279,44 @@ const Header = ({
             </button>
 
             {profileOpen && (
-              <div className="absolute right-0 mt-3 w-52 sm:w-56 bg-[var(--color-surface-card)] border border-[var(--color-border-default)] rounded-2xl shadow-xl py-2 animate-in fade-in zoom-in-95 duration-200">
+              <div className="absolute right-0 mt-3 w-52 sm:w-56 max-w-[calc(100vw-1rem)] bg-[var(--color-surface-card)] border border-[var(--color-border-default)] rounded-2xl shadow-2xl py-2 z-50 animate-in fade-in zoom-in-95 duration-200">
+                {/* User info */}
                 <div className="px-4 py-3 border-b border-[var(--color-border-default)]">
-                  <p className="text-xs font-bold">Signed in as</p>
-                  <p className="text-xs text-[var(--color-content-muted)] truncate">
+                  <p className="text-[11px] font-black uppercase tracking-widest text-[var(--color-content-muted)] mb-1">
+                    Signed in as
+                  </p>
+                  <p className="text-xs font-bold text-[var(--color-content-primary)] truncate">
+                    {user?.name}
+                  </p>
+                  <p className="text-[10px] text-[var(--color-content-muted)] truncate">
                     {user?.email}
                   </p>
                 </div>
 
                 <Link
-                  onClick={() => setProfileOpen(false)}
                   to="/dashboard/profile"
-                  className="flex items-center gap-3 px-4 py-2.5 text-xs hover:bg-[var(--color-surface-muted)] transition-colors"
-                >
-                  <User size={14} /> My Profile
-                </Link>
-
-                <Link
                   onClick={() => setProfileOpen(false)}
-                  to="/dashboard/settings"
-                  className="flex items-center gap-3 px-4 py-2.5 text-xs hover:bg-[var(--color-surface-muted)] transition-colors"
+                  className="flex items-center gap-3 px-4 py-2.5 text-xs font-medium hover:bg-[var(--color-surface-muted)] transition-colors"
                 >
-                  <Settings size={14} /> Console Settings
+                  <User size={14} className="shrink-0" /> My Profile
+                </Link>
+                <Link
+                  to="/dashboard/settings"
+                  onClick={() => setProfileOpen(false)}
+                  className="flex items-center gap-3 px-4 py-2.5 text-xs font-medium hover:bg-[var(--color-surface-muted)] transition-colors"
+                >
+                  <Settings size={14} className="shrink-0" /> Console Settings
                 </Link>
 
                 <div className="h-px bg-[var(--color-border-default)] my-1" />
 
                 <button
                   onClick={handleLogout}
-                  className="w-full flex items-center gap-3 px-4 py-2.5 text-xs text-red-500 hover:bg-red-50 transition-colors"
+                  disabled={isLoading}
+                  className="w-full flex items-center gap-3 px-4 py-2.5 text-xs font-medium text-red-500 hover:bg-red-50 transition-colors disabled:opacity-50"
                 >
-                  <LogOut size={14} /> Sign Out
+                  <LogOut size={14} className="shrink-0" />
+                  {isLoading ? "Signing out…" : "Sign Out"}
                 </button>
               </div>
             )}

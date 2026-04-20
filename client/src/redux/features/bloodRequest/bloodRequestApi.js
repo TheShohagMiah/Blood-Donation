@@ -63,6 +63,13 @@ export const bloodRequestApi = createApi({
       }),
       invalidatesTags: [{ type: "BloodRequests", id: "LIST" }],
     }),
+
+    getRequestAnalytics: builder.query({
+      query: (range = "daily") => ({
+        url: `/analytics/requests?range=${range}`,
+        method: "GET",
+      }),
+    }),
   }),
 });
 
@@ -74,4 +81,5 @@ export const {
   useDeleteBloodRequestMutation,
   useGetBloodRequestByIdQuery,
   useGetOwnBloodRequestsQuery,
+  useGetRequestAnalyticsQuery,
 } = bloodRequestApi;

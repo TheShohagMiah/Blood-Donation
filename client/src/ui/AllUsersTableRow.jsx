@@ -50,7 +50,7 @@ const AllUsersTableRow = React.memo(
           <div className="relative">
             <img
               src={user.avatar}
-              className="w-10 h-10 rounded-xl object-cover border border-[var(--color-border-default)]"
+              className="w-10 h-10 rounded-md object-cover border border-[var(--color-border-default)]"
               alt=""
             />
             <div
@@ -70,7 +70,7 @@ const AllUsersTableRow = React.memo(
         </div>
       </td>
       <td className="px-8 py-5">
-        <span className="px-4 py-2 w-fit rounded-xl bg-red-100 text-red-700 font-bold text-sm flex items-center gap-2">
+        <span className="px-4 py-2 w-fit rounded-md bg-red-100 text-red-700 font-bold text-sm flex items-center gap-2">
           <Droplets size={16} /> {user.bloodGroup}
         </span>
       </td>
@@ -109,7 +109,7 @@ const AllUsersTableRow = React.memo(
           {isOpen && (
             <div
               onClick={(e) => e.stopPropagation()}
-              className="absolute right-0 top-full mt-1 w-52 bg-[var(--color-surface-card)] border border-[var(--color-border-default)] rounded-xl shadow-2xl z-50 py-2 animate-in fade-in zoom-in-95 duration-200"
+              className="absolute right-0 top-full mt-1 w-52 bg-[var(--color-surface-card)] border border-[var(--color-border-default)] rounded-md shadow-2xl z-50 py-2 animate-in fade-in zoom-in-95 duration-200"
             >
               <DropdownItem
                 onClick={() =>

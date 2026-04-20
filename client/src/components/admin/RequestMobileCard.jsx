@@ -26,7 +26,7 @@ const RequestMobileCard = ({ item, onView, onEdit, onDelete }) => {
             By: {item.requester?.name || "System"}
           </p>
         </div>
-        <span className="text-xs font-black text-red-600 bg-red-50 px-3 py-1.5 rounded-xl border border-red-100">
+        <span className="text-xs font-black text-red-600 bg-red-50 px-3 py-1.5 rounded-md border border-red-100">
           {item.bloodGroup}
         </span>
       </div>

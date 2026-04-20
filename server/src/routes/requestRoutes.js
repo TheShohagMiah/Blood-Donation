@@ -4,6 +4,7 @@ import {
   deleteRequest,
   getOwnRequests,
   getPendingRequests,
+  getRequestAnalytics,
   getRequestById,
   getRequests,
   updateRequest,
@@ -49,4 +50,5 @@ requestRoutes.delete(
   deleteRequest,
 );
 
+requestRoutes.get("/analytics/requests", getRequestAnalytics);
 export default requestRoutes;

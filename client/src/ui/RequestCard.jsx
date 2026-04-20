@@ -15,7 +15,7 @@ const RequestCard = React.memo(({ req, onView, onDonate }) => {
   return (
     <div className="group bg-[var(--color-surface-card)] border border-[var(--color-border-default)] hover:border-[var(--color-primary-600)] rounded-[var(--radius-xl)] p-5 transition-all flex flex-col gap-6">
       <div className="flex items-center gap-5">
-        <div className="w-14 h-14 rounded-xl bg-[var(--color-primary-50)] border border-[var(--color-primary-100)] flex flex-col items-center justify-center shrink-0">
+        <div className="w-14 h-14 rounded-md bg-[var(--color-primary-50)] border border-[var(--color-primary-100)] flex flex-col items-center justify-center shrink-0">
           <span className="text-lg font-black text-[var(--color-primary-600)]">
             {req.bloodGroup}
           </span>

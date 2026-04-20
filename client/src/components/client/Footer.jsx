@@ -37,7 +37,7 @@ const Footer = () => {
           {/* Brand Identity & Newsletter */}
           <div className="lg:col-span-2 space-y-8">
             <Link to="/" className="flex items-center gap-3 group w-fit">
-              <div className="bg-[var(--color-primary-600)] p-2 rounded-xl transition-all group-hover:shadow-lg group-hover:shadow-primary-600/20">
+              <div className="bg-[var(--color-primary-600)] p-2 rounded-md transition-all group-hover:shadow-lg group-hover:shadow-primary-600/20">
                 <Droplet size={22} className="text-white fill-current" />
               </div>
               <span className="text-2xl font-bold tracking-tighter text-[var(--color-content-primary)]">
@@ -53,15 +53,15 @@ const Footer = () => {
 
             <div className="space-y-4 pt-4">
               <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-[var(--color-primary-600)]">
-                System Updates
+                Subscribe
               </h3>
               <div className="flex max-w-[320px] group relative">
                 <input
                   type="email"
                   placeholder="PROTOCOL@EMAIL.COM"
-                  className="w-full bg-[var(--color-surface-secondary)] border border-[var(--color-border-default)] rounded-xl h-12 px-5 text-[10px] font-bold tracking-widest focus:outline-none focus:border-[var(--color-primary-600)] transition-all uppercase"
+                  className="w-full bg-[var(--color-surface-secondary)] border border-[var(--color-border-default)] rounded-md h-12 px-5 text-[10px] font-bold tracking-widest focus:outline-none focus:border-[var(--color-primary-600)] transition-all uppercase"
                 />
-                <button className="absolute right-1.5 top-1.5 bottom-1.5 px-4 bg-[var(--color-content-primary)] text-white rounded-lg hover:bg-[var(--color-primary-600)] transition-all flex items-center justify-center">
+                <button className="absolute right-1.5 top-1.5 bottom-1.5 px-4 bg-primary-600 text-white rounded-md  transition-all flex items-center justify-center">
                   <Send size={14} />
                 </button>
               </div>

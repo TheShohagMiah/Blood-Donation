@@ -37,7 +37,7 @@ const LoginPage = () => {
 
   return (
     <div className=" flex items-center justify-center bg-surface-main px-4 pt-10">
-      <BackgroundGradient className="w-full max-w-2xl space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700 bg-surface-primary rounded-xl shadow-[var(--shadow-xl)] border-border-strong p-8 md:p-10">
+      <BackgroundGradient className="w-full max-w-2xl space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700 bg-surface-primary rounded-md shadow-[var(--shadow-xl)] border-border-strong p-8 md:p-10">
         {/* Header Section */}
         <div className="text-center space-y-2">
           <h1 className="text-3xl font-bold tracking-tight text-[var(--color-content-primary)]">

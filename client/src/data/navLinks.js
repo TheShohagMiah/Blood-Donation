@@ -83,9 +83,9 @@ export const navLinks = [
   },
 
   {
-    id: "settings",
-    name: "Settings",
-    path: "/dashboard/settings",
+    id: "profile-settings",
+    name: "Profile Settings",
+    path: "/dashboard/profile",
     icon: Settings,
     roles: ["admin", "donor", "volunteer"],
   },

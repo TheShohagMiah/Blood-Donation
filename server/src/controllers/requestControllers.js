@@ -276,3 +276,71 @@ export const getOwnRequests = async (req, res, next) => {
     next(error);
   }
 };
+
+/**
+ * @desc    Request analytics (daily / weekly / monthly)
+ * @access  Private (Admin)
+ */
+export const getRequestAnalytics = async (req, res, next) => {
+  try {
+    const { range = "daily" } = req.query;
+
+  // 🧠 Define grouping
+    let groupId;
+
+    if (range === "daily") {
+      groupId = {
+        $dateToString: { format: "%Y-%m-%d", date: "$createdAt" },
+      };
+    } else if (range === "weekly") {
+      groupId = {
+        year: { $year: "$createdAt" },
+        week: { $isoWeek: "$createdAt" },
+      };
+    } else if (range === "monthly") {
+      groupId = {
+        $dateToString: { format: "%Y-%m", date: "$createdAt" },
+      };
+    }
+
+    // 🧠 Optional: last 30 days filter (recommended)
+    const matchStage = {
+      createdAt: {
+        $gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
+      },
+    };
+
+    const analytics = await Request.aggregate([
+      { $match: matchStage },
+
+      {
+        $group: {
+          _id: groupId,
+          count: { $sum: 1 },
+        },
+      },
+
+      { $sort: { _id: 1 } },
+    ]);
+
+    // 🧠 Format labels nicely
+    let labels = [];
+    let values = [];
+
+    if (range === "weekly") {
+      labels = analytics.map((d) => `Week ${d._id.week} (${d._id.year})`);
+    } else {
+      labels = analytics.map((d) => d._id);
+    }
+
+    values = analytics.map((d) => d.count);
+
+    res.status(200).json({
+      success: true,
+      labels,
+      values,
+    });
+  } catch (error) {
+    next(error);
+  }
+};

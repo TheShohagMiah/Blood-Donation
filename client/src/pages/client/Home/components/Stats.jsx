@@ -49,7 +49,7 @@ const Stats = () => {
             {/* Top Row: Functional Icon */}
             <div className="flex justify-between items-start">
               <div
-                className={`p-3 rounded-xl ${stat.bg} ${stat.color} transition-all duration-500 group-hover:scale-110 group-hover:shadow-lg shadow-current/10`}
+                className={`p-3 rounded-md mb-4 ${stat.bg} ${stat.color} transition-all duration-500 group-hover:scale-110 group-hover:shadow-lg shadow-current/10`}
               >
                 <stat.icon size={24} strokeWidth={2.5} />
               </div>
@@ -84,19 +84,6 @@ const Stats = () => {
             <div className="absolute top-0 right-0 w-32 h-32 bg-[var(--color-primary-500)] opacity-0 group-hover:opacity-[0.02] blur-3xl rounded-full -translate-y-1/2 translate-x-1/2 transition-opacity duration-700 pointer-events-none" />
           </div>
         ))}
-      </div>
-
-      {/* System Pulse Footer */}
-      <div className="mt-8 flex justify-center">
-        <div className="inline-flex items-center gap-3 px-4 py-2 rounded-full border border-[var(--color-border-default)] bg-[var(--color-surface-card)] shadow-sm">
-          <span className="flex h-2 w-2 relative">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-            <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-          </span>
-          <span className="text-[9px] font-black uppercase tracking-[0.2em] text-[var(--color-content-secondary)]">
-            Real-Time Telemetry Active
-          </span>
-        </div>
       </div>
     </section>
   );

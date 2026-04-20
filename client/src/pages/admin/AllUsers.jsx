@@ -143,13 +143,13 @@ const AllUsers = () => {
             <input
               type="text"
               placeholder="SEARCH BY NAME OR EMAIL..."
-              className="w-full bg-[var(--color-surface-muted)]/50 border border-[var(--color-border-default)] rounded-xl py-2.5 pl-11 pr-4 text-[10px] font-black tracking-widest focus:ring-1 focus:ring-[var(--color-primary-500)] transition-all outline-none"
+              className="w-full bg-[var(--color-surface-muted)]/50 border border-[var(--color-border-default)] rounded-md py-2.5 pl-11 pr-4 text-[10px] font-black tracking-widest focus:ring-1 focus:ring-[var(--color-primary-500)] transition-all outline-none"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
           </div>
 
-          <div className="flex bg-[var(--color-surface-tertiary)] p-1 rounded-xl border border-[var(--color-border-default)]">
+          <div className="flex bg-[var(--color-surface-tertiary)] p-1 rounded-md border border-[var(--color-border-default)]">
             {["all", "active", "blocked"].map((s) => (
               <button
                 key={s}

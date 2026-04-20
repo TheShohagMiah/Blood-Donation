@@ -37,7 +37,6 @@ const AllDonationRequests = () => {
   } = useGetAllBloodRequestsQuery();
   const [deleteBloodRequest] = useDeleteBloodRequestMutation();
 
-  // Reset to page 1 whenever filters change
   useEffect(() => {
     setPage(1);
   }, [debouncedSearch, statusFilter, sortOrder]);
@@ -96,19 +95,24 @@ const AllDonationRequests = () => {
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 py-10 space-y-10 animate-in fade-in duration-700">
-      <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-        <div className="search w-full md:max-w-sm">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-10 space-y-6 sm:space-y-8 animate-in fade-in duration-700">
+      {/* ── Toolbar: search + filters ── */}
+      <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
+        {/* Search — full width on mobile, capped on larger screens */}
+        <div className="w-full sm:max-w-xs lg:max-w-sm">
           <Input
             type="search"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             placeholder="Search..."
-            className="pr-10 h-8"
+            className="h-8 w-full"
           />
         </div>
-        <div className="flex items-center gap-4 text-xs font-medium uppercase tracking-widest text-[var(--color-content-muted)]">
+
+        {/* Filters — wrap on very small screens, row on sm+ */}
+        <div className="flex items-center gap-2 sm:gap-3 text-xs font-medium uppercase tracking-widest text-[var(--color-content-muted)] sm:ml-auto">
           <Select
+            className="flex-1 min-w-[120px] sm:flex-none sm:w-auto"
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
           >
@@ -118,7 +122,9 @@ const AllDonationRequests = () => {
             <option value="done">Fulfilled</option>
             <option value="cancelled">Cancelled</option>
           </Select>
+
           <Select
+            className="flex-1 min-w-[110px] sm:flex-none sm:w-auto"
             value={sortOrder}
             onChange={(e) => setSortOrder(e.target.value)}
           >
@@ -129,6 +135,7 @@ const AllDonationRequests = () => {
         </div>
       </div>
 
+      {/* ── Empty state ── */}
       {sortedData.length === 0 ? (
         <div className="bg-[var(--color-surface-card)] border border-[var(--color-border-default)] rounded-[var(--radius-2xl)] py-20 text-center">
           <Droplets
@@ -141,7 +148,8 @@ const AllDonationRequests = () => {
         </div>
       ) : (
         <>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 lg:hidden">
+          {/* ── Mobile / Tablet cards (hidden on lg+) ── */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 lg:hidden">
             {paginatedData.map((item) => (
               <RequestMobileCard
                 key={item._id}
@@ -153,28 +161,28 @@ const AllDonationRequests = () => {
             ))}
           </div>
 
-          <div className="hidden lg:block bg-[var(--color-surface-card)] rounded-[var(--radius-md)] border border-[var(--color-border-default)] shadow-sm overflow-hidden">
-            <table className="w-full text-left border-collapse">
+          {/* ── Desktop table (hidden below lg) ── */}
+          <div className="hidden lg:block bg-[var(--color-surface-card)] rounded-[var(--radius-md)] border border-[var(--color-border-default)] shadow-sm overflow-x-auto">
+            <table className="w-full min-w-[700px] text-left border-collapse">
               <thead>
                 <tr className="bg-[var(--color-surface-muted)]/30 border-b border-[var(--color-border-default)]">
-                  <th className="px-8 py-5 text-[10px] font-black uppercase tracking-[0.2em] text-[var(--color-content-muted)]">
-                    Recipient
-                  </th>
-                  <th className="px-8 py-5 text-[10px] font-black uppercase tracking-[0.2em] text-[var(--color-content-muted)]">
-                    Location
-                  </th>
-                  <th className="px-8 py-5 text-[10px] font-black uppercase tracking-[0.2em] text-[var(--color-content-muted)] text-center">
-                    Group
-                  </th>
-                  <th className="px-8 py-5 text-[10px] font-black uppercase tracking-[0.2em] text-[var(--color-content-muted)]">
-                    Schedule
-                  </th>
-                  <th className="px-8 py-5 text-[10px] font-black uppercase tracking-[0.2em] text-[var(--color-content-muted)]">
-                    Status
-                  </th>
-                  <th className="px-8 py-5 text-[10px] font-black uppercase tracking-[0.2em] text-[var(--color-content-muted)]">
-                    Actions
-                  </th>
+                  {[
+                    "Recipient",
+                    "Location",
+                    "Group",
+                    "Schedule",
+                    "Status",
+                    "Actions",
+                  ].map((col) => (
+                    <th
+                      key={col}
+                      className={`px-6 xl:px-8 py-5 text-[10px] font-black uppercase tracking-[0.2em] text-[var(--color-content-muted)]${
+                        col === "Group" ? " text-center" : ""
+                      }`}
+                    >
+                      {col}
+                    </th>
+                  ))}
                 </tr>
               </thead>
               <tbody className="divide-y divide-[var(--color-border-default)]">
@@ -195,6 +203,7 @@ const AllDonationRequests = () => {
         </>
       )}
 
+      {/* ── Modals ── */}
       {viewData && (
         <RequestViewModal data={viewData} onClose={() => setViewData(null)} />
       )}

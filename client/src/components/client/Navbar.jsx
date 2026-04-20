@@ -94,7 +94,7 @@ const Navbar = () => {
       <div className="max-w-7xl mx-auto px-6 flex items-center justify-between">
         {/* Brand */}
         <Link to="/" className="flex items-center gap-2.5 group">
-          <div className="bg-[var(--color-primary-600)] p-2 rounded-xl group-hover:rotate-[12deg] transition-transform duration-300">
+          <div className="bg-[var(--color-primary-600)] p-2 rounded-md group-hover:rotate-[12deg] transition-transform duration-300">
             <Droplet size={20} className="text-white fill-current" />
           </div>
           <span className="text-xl font-black uppercase tracking-tighter text-[var(--color-content-primary)]">
@@ -222,7 +222,7 @@ const Navbar = () => {
           <button
             onClick={() => dispatch(toggleSidebar())}
             aria-label={isSidebarOpen ? "Close menu" : "Open menu"}
-            className="p-2.5 rounded-xl bg-[var(--color-surface-muted)] text-[var(--color-content-primary)]"
+            className="p-2.5 rounded-md bg-[var(--color-surface-muted)] text-[var(--color-content-primary)]"
           >
             {isSidebarOpen ? <X size={20} /> : <Menu size={20} />}
           </button>

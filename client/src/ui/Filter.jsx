@@ -106,7 +106,7 @@ const FilterSection = ({
           {/* 3. Action Button: High Impact */}
           <Button
             type="submit"
-            className="w-full h-12 bg-[var(--color-content-primary)] hover:bg-black text-white rounded-xl flex items-center justify-center gap-3 transition-all active:scale-[0.97] border-none"
+            className="w-full h-12 bg-[var(--color-content-primary)] hover:bg-black text-white rounded-md flex items-center justify-center gap-3 transition-all active:scale-[0.97] border-none"
           >
             <Filter size={16} strokeWidth={3} />
             <span className="text-[10px] font-black uppercase tracking-[0.2em]">

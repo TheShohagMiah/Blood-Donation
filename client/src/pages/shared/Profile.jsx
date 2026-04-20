@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
   User,
   ShieldCheck,
@@ -10,7 +10,7 @@ import {
   MapPin,
   Calendar,
 } from "lucide-react";
-import { useForm } from "react-hook-form";
+import { Controller, useForm } from "react-hook-form";
 import Button from "../../ui/Button";
 import { useSelector } from "react-redux";
 import { useUpdateProfileMutation } from "../../redux/features/isAuth/authApi";
@@ -26,7 +26,6 @@ const BLOOD_GROUPS = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"];
 
 const Profile = () => {
   const { user } = useSelector((state) => state.auth);
-
   const [updateProfile] = useUpdateProfileMutation();
   const [isEditing, setIsEditing] = useState(false);
 
@@ -35,6 +34,7 @@ const Profile = () => {
     handleSubmit,
     watch,
     reset,
+    control,
     setValue,
     formState: { isSubmitting, isDirty, errors },
   } = useForm({
@@ -48,22 +48,18 @@ const Profile = () => {
     },
   });
 
-  // Watch fields for live UI updates
   const avatar = watch("avatar");
   const bloodGroup = watch("bloodGroup");
   const selectedDistrict = watch("district");
 
-  // Functional Logic: Filter Upazilas based on selected District
   const filteredUpazilas = useMemo(() => {
     if (!selectedDistrict) return [];
-    // Find the district object to get its ID
     const districtObj = districts.find((d) => d.name === selectedDistrict);
     if (!districtObj) return [];
-    // Filter upazilas that belong to this district ID
     return upazilas.filter((u) => u.district_id === districtObj.id);
   }, [selectedDistrict]);
 
-  // Sync Redux user into form when user loads
+  // Sync Redux user into form on load
   useEffect(() => {
     if (user) {
       reset({
@@ -77,6 +73,16 @@ const Profile = () => {
     }
   }, [user, reset]);
 
+  // Reset upazila when district changes — skip on initial load
+  const isFirstRender = useRef(true);
+  useEffect(() => {
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      return;
+    }
+    setValue("upazila", "");
+  }, [selectedDistrict, setValue]);
+
   const handleImageUpload = (e) => {
     const file = e.target.files[0];
     if (!file) return;
@@ -86,18 +92,17 @@ const Profile = () => {
     reader.readAsDataURL(file);
   };
 
-  // Functionality: Profile Update
   const onSubmit = async (data) => {
     try {
-      const profileData = {
+      await updateProfile({
         name: data.name,
         district: data.district,
         upazila: data.upazila,
         bloodGroup: data.bloodGroup,
         avatar: data.avatar,
         email: data.email,
-      };
-      await updateProfile(profileData).unwrap();
+      }).unwrap();
+      toast.success("Profile updated successfully.");
       setIsEditing(false);
     } catch (error) {
       toast.error(error?.data?.message || "Failed to update profile.");
@@ -105,14 +110,14 @@ const Profile = () => {
   };
 
   const handleCancel = () => {
-    reset(); // revert to last saved values
+    reset();
     setIsEditing(false);
   };
 
   return (
     <div className="max-w-5xl mx-auto space-y-8 animate-in fade-in duration-500">
       <div className="bg-[var(--color-surface-card)] border border-[var(--color-border-default)] rounded-[var(--radius-lg)] p-8 relative overflow-hidden">
-        {/* Decorative blood group watermark */}
+        {/* Blood group watermark */}
         <div className="absolute -right-6 -top-6 text-[120px] font-black text-[var(--color-primary-600)] opacity-5 select-none pointer-events-none">
           {bloodGroup}
         </div>
@@ -145,6 +150,7 @@ const Profile = () => {
           </div>
 
           <div className="flex-1 text-center md:text-left space-y-6">
+            {/* Header */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
               <div>
                 <div className="flex items-center justify-center md:justify-start gap-3">
@@ -206,63 +212,87 @@ const Profile = () => {
               <Input
                 label="Email"
                 type="email"
-                readOnly={true}
-                {...register("email", { required: "Email is required" })}
+                readOnly
+                {...register("email")}
                 disabled={!isEditing}
-                error={errors?.email?.message}
               />
-              <Select
-                label="Blood Group"
-                {...register("bloodGroup", {
-                  required: "Blood group is required",
-                })}
-                disabled={!isEditing}
-                error={errors?.bloodGroup?.message}
-              >
-                <option value="">Select Blood Group</option>
-                {BLOOD_GROUPS.map((bg) => (
-                  <option key={bg} value={bg}>
-                    {bg}
-                  </option>
-                ))}
-              </Select>
 
-              <Select
-                label="District"
-                {...register("district", {
-                  required: "District is required",
-                })}
-                disabled={!isEditing}
-                error={errors?.district?.message}
-              >
-                <option value="">Select District</option>
-                {districts.map((dist) => (
-                  <option key={dist.id || dist.name} value={dist.name}>
-                    {dist.name}
-                  </option>
-                ))}
-              </Select>
-              <Select
-                label="Upazila"
-                {...register("upazila", {
-                  required: "Upazila is required",
-                })}
-                disabled={!isEditing || !selectedDistrict}
-                error={errors?.upazila?.message}
-              >
-                <option value="">Select Upazila</option>
-                {filteredUpazilas.map((upazila) => (
-                  <option key={upazila.id || upazila.name} value={upazila.name}>
-                    {upazila.name}
-                  </option>
-                ))}
-              </Select>
+              <Controller
+                name="bloodGroup"
+                control={control}
+                rules={{ required: "Blood group is required" }}
+                render={({ field }) => (
+                  <Select
+                    label="Blood Group"
+                    error={errors?.bloodGroup?.message}
+                    value={field.value ?? ""}
+                    onChange={(e) => field.onChange(e.target.value)}
+                    onBlur={field.onBlur}
+                    disabled={!isEditing}
+                  >
+                    <option value="">Select Blood Group</option>
+                    {BLOOD_GROUPS.map((bg) => (
+                      <option key={bg} value={bg}>
+                        {bg}
+                      </option>
+                    ))}
+                  </Select>
+                )}
+              />
+
+              <Controller
+                name="district"
+                control={control}
+                rules={{ required: "District is required" }}
+                render={({ field }) => (
+                  <Select
+                    label="District"
+                    error={errors?.district?.message}
+                    value={field.value ?? ""}
+                    onChange={(e) => field.onChange(e.target.value)}
+                    onBlur={field.onBlur}
+                    disabled={!isEditing}
+                  >
+                    <option value="">Select District</option>
+                    {districts.map((dist) => (
+                      <option key={dist.id || dist.name} value={dist.name}>
+                        {dist.name}
+                      </option>
+                    ))}
+                  </Select>
+                )}
+              />
+
+              <Controller
+                name="upazila"
+                control={control}
+                rules={{ required: "Upazila is required" }}
+                render={({ field }) => (
+                  <Select
+                    label="Upazila"
+                    error={errors?.upazila?.message}
+                    value={field.value ?? ""}
+                    onChange={(e) => field.onChange(e.target.value)}
+                    onBlur={field.onBlur}
+                    disabled={!isEditing || !selectedDistrict}
+                  >
+                    <option value="">Select Upazila</option>
+                    {filteredUpazilas.map((upazila) => (
+                      <option
+                        key={upazila.id || upazila.name}
+                        value={upazila.name}
+                      >
+                        {upazila.name}
+                      </option>
+                    ))}
+                  </Select>
+                )}
+              />
             </form>
           </div>
         </div>
       </div>
 
-      {/* Update Password */}
       <UpdatePassword />
 
       {/* Stats */}

@@ -45,7 +45,7 @@ const Services = () => {
               Operations Manual
             </h2>
             <h3 className="text-4xl font-bold text-[var(--color-content-primary)] tracking-tight leading-[1.1]">
-              How the Ecosystem Functions.
+              How it does work.
             </h3>
           </div>
           <p className="text-sm text-[var(--color-content-muted)] leading-relaxed max-w-sm">
@@ -76,7 +76,7 @@ const Services = () => {
               </span>
 
               <div className="space-y-6 relative z-10">
-                <div className="w-12 h-12 rounded-xl bg-[var(--color-primary-600)] text-white flex items-center justify-center shadow-lg shadow-primary-600/20">
+                <div className="w-12 h-12 rounded-md bg-[var(--color-primary-600)] text-white flex items-center justify-center shadow-lg shadow-primary-600/20">
                   {item.icon}
                 </div>
 

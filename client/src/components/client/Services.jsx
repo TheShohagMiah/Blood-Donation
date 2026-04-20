@@ -14,28 +14,24 @@ const Services = () => {
       title: "Identity Initialization",
       description:
         "Join our donor network to track impact metrics and receive district-specific urgent alerts.",
-      tag: "Protocol 01",
     },
     {
       icon: <Calendar size={20} />,
       title: "Request Deployment",
       description:
         "Browse live feeds or post a blood requirement as a guest. System-wide sync is instantaneous.",
-      tag: "Protocol 02",
     },
     {
       icon: <HeartPulse size={20} />,
       title: "Direct Coordination",
       description:
         "Secure bridge lines enable direct contact with hospital coordinators and verified recipients.",
-      tag: "Protocol 03",
     },
     {
       icon: <ShieldCheck size={20} />,
       title: "Safety Validation",
       description:
         "Every entry undergoes rate-limiting and metadata verification to ensure genuine clinical need.",
-      tag: "Protocol 04",
     },
   ];
 
@@ -74,14 +70,11 @@ const Services = () => {
             </span>
 
             <div className="relative z-10 space-y-8">
-              <div className="w-12 h-12 rounded-xl bg-[var(--color-primary-600)] text-white flex items-center justify-center shadow-lg shadow-primary-600/20 group-hover:scale-110 transition-transform duration-500">
+              <div className="w-12 h-12 rounded-md bg-[var(--color-primary-600)] text-white flex items-center justify-center shadow-lg shadow-primary-600/20 group-hover:scale-110 transition-transform duration-500">
                 {step.icon}
               </div>
 
               <div className="space-y-4">
-                <span className="text-[9px] font-black uppercase tracking-[0.2em] text-[var(--color-primary-600)] bg-[var(--color-primary-50)] px-2 py-1 rounded">
-                  {step.tag}
-                </span>
                 <h4 className="text-xl font-bold text-[var(--color-content-primary)] tracking-tight">
                   {step.title}
                 </h4>
@@ -96,22 +89,6 @@ const Services = () => {
             </div>
           </div>
         ))}
-      </div>
-
-      {/* Footer System Status */}
-      <div className="mt-12 flex flex-col md:flex-row items-center gap-8 justify-between p-8 rounded-[var(--radius-xl)] bg-[var(--color-surface-secondary)] border border-[var(--color-border-default)]">
-        <div className="flex items-center gap-4">
-          <div className="relative flex h-3 w-3">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-            <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
-          </div>
-          <p className="text-xs font-bold text-[var(--color-content-secondary)] uppercase tracking-widest">
-            System Status: Verified & Live Sync Active
-          </p>
-        </div>
-        <button className="flex items-center gap-3 px-8 py-3 bg-[var(--color-content-primary)] text-white text-[10px] font-black uppercase tracking-[0.2em] rounded-xl hover:opacity-90 transition-all active:scale-95 shadow-xl shadow-black/10">
-          Security Overview <ShieldCheck size={14} />
-        </button>
       </div>
     </section>
   );

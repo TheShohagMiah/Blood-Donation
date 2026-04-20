@@ -75,7 +75,7 @@ const FindDonors = () => {
     <div className="flex flex-col lg:flex-row gap-8 animate-in fade-in duration-500 pb-20">
       {/* 1. SIDEBAR: TECHNICAL CONTROL PANEL */}
       <aside className="w-full lg:w-80 group sticky top-20 ">
-        <div className="bg-[var(--color-surface-card)] border border-[var(--color-border-default)] rounded-[var(--radius-xl)] overflow-hidden lg:sticky lg:top-28 transition-all duration-300 hover:border-[var(--color-border-strong)] shadow-sm">
+        <div className="bg-[var(--color-surface-card)] border border-[var(--color-border-default)] rounded-[var(--radius-xl)] overflow-hidden relative lg:sticky lg:top-28 transition-all duration-300 hover:border-[var(--color-border-strong)] shadow-sm">
           {/* Header Section */}
           <div className="flex items-center justify-between px-5 py-4 border-b border-[var(--color-border-default)] bg-[var(--color-surface-muted)]/30">
             <div className="flex items-center gap-2">
@@ -177,7 +177,7 @@ const FindDonors = () => {
 
             <Button
               type="submit"
-              className="w-full h-12 bg-[var(--color-content-primary)] hover:bg-black text-white rounded-xl flex items-center justify-center gap-3 transition-all active:scale-[0.97] border-none shadow-md"
+              className="w-full h-12 bg-[var(--color-content-primary)] hover:bg-black text-white rounded-md flex items-center justify-center gap-3 transition-all active:scale-[0.97] border-none shadow-md"
             >
               <Filter size={16} strokeWidth={3} />
               <span className="text-[10px] font-black uppercase tracking-[0.2em]">

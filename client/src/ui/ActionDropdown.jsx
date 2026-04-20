@@ -25,7 +25,7 @@ const ActionDropdown = ({ onView, onEdit, onDelete }) => {
       {isOpen && (
         <div
           onClick={(e) => e.stopPropagation()}
-          className="absolute right-0 mt-2 w-52 bg-[var(--color-surface-card)] border border-[var(--color-border-default)] rounded-xl shadow-2xl z-50 py-2 animate-in fade-in zoom-in-95 duration-200"
+          className="absolute right-0 mt-2 w-52 bg-[var(--color-surface-card)] border border-[var(--color-border-default)] rounded-md shadow-2xl z-50 py-2 animate-in fade-in zoom-in-95 duration-200"
         >
           <button
             onClick={() => {

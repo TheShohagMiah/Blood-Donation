@@ -84,7 +84,7 @@ const Hero = () => {
           {/* Main Card */}
           <div className="glass w-64 h-80 lg:w-80 lg:h-96 rounded-2xl shadow-xl p-6 lg:p-8 relative overflow-hidden rotate-3 flex flex-col justify-between">
             <div className="space-y-4">
-              <div className="w-12 h-12 lg:w-14 lg:h-14 rounded-xl bg-primary-600 flex items-center justify-center text-content-inverse shadow-md">
+              <div className="w-12 h-12 lg:w-14 lg:h-14 rounded-md bg-primary-600 flex items-center justify-center text-content-inverse shadow-md">
                 <HeartPulse size={28} className="lg:w-8 lg:h-8" />
               </div>
               <div className="space-y-2">
@@ -102,7 +102,7 @@ const Hero = () => {
           </div>
 
           {/* Floating Request Card */}
-          <div className="absolute top-1/2 -left-2 lg:-left-4 -translate-y-1/2 bg-surface-primary border border-border-strong text-content-primary p-4 lg:p-6 rounded-xl shadow-xl -rotate-6 max-w-[180px] lg:max-w-[210px] z-20">
+          <div className="absolute top-1/2 -left-2 lg:-left-4 -translate-y-1/2 bg-surface-primary border border-border-strong text-content-primary p-4 lg:p-6 rounded-md shadow-xl -rotate-6 max-w-[180px] lg:max-w-[210px] z-20">
             <p className="text-[8px] lg:text-[10px] text-content-muted uppercase tracking-widest font-bold mb-2 lg:mb-3">
               Active Requests
             </p>
