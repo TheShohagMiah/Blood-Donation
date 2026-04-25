@@ -68,7 +68,7 @@ const AdminDashboard = () => {
       {/* ✅ ADD THIS */}
       <RequestAnalyticsChart />
       {/* ── Recent Requests ── */}
-      <div className="bg-[var(--color-surface-card)] border border-[var(--color-border-default)] rounded-md shadow-sm overflow-hidden">
+      <div className="">
         {/* Card header */}
         <div className="flex items-center justify-between px-5 sm:px-6 py-4 border-b border-[var(--color-border-default)]">
           <div>

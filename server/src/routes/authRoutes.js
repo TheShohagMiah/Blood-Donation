@@ -11,6 +11,7 @@ import {
   logout,
   registration,
   updateProfile,
+  updateProfileAvatar,
   updateUserRole,
   updateUserStatus,
 } from "../controllers/authController.js";
@@ -18,11 +19,12 @@ import {
   authorizeRoles,
   isAuthenticated,
 } from "../middlewares/authMiddlewares.js";
+import { upload } from "../middlewares/multer.js";
 
 const authRoutes = Router();
 
-authRoutes.post("/register", registration); //completed
-authRoutes.post("/login", login); //completed
+authRoutes.post("/register", upload.single("avatar"), registration);
+authRoutes.post("/login", login);
 authRoutes.get(
   "/stats",
   isAuthenticated,
@@ -32,6 +34,12 @@ authRoutes.get(
 authRoutes.patch("/update-profile", isAuthenticated, updateProfile);
 authRoutes.post("/logout", isAuthenticated, logout);
 authRoutes.patch("/update-password", isAuthenticated, changePassword);
+authRoutes.patch(
+  "/update-avatar",
+  isAuthenticated,
+  upload.single("avatar"),
+  updateProfileAvatar,
+);
 
 authRoutes.get(
   "/stats",

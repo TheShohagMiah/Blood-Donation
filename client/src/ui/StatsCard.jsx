@@ -3,8 +3,10 @@ import { HelpCircle } from "lucide-react";
 
 const StatsCard = ({ icon: Icon = HelpCircle, label, value }) => {
   return (
-    <div className="flex flex-col bg-surface-card transition-all p-6 border border-border-default rounded-md shadow-md">
-      <div className="bg-red-200 w-12 h-12 flex items-center justify-center text-primary-700 rounded-lg mb-6">
+    <div className="group relative overflow-hidden rounded-md border border-border-default bg-surface-card backdrop-blur-xl p-6 shadow-lg transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl">
+      {/* Glow effect */}
+      <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition duration-500 bg-gradient-to-br from-primary-500/10 via-transparent to-transparent" />
+      <div className="bg-primary-600 w-12 h-12 flex items-center justify-center text-white rounded-md mb-6">
         <Icon size={20} strokeWidth={2} />
       </div>
       <div className="flex flex-col gap-1">

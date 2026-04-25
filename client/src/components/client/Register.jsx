@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { Link, useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
@@ -8,6 +8,7 @@ import {
   Lock,
   Droplet,
   ArrowRight,
+  ImagePlus,
 } from "lucide-react";
 
 import Input from "../../ui/Input";
@@ -20,7 +21,8 @@ import { BackgroundGradient } from "../ui/background-gradient";
 
 const RegisterForm = () => {
   const navigate = useNavigate();
-  const [registerUser, { isLoading, isSuccess }] = useRegistrationMutation();
+  const [registerUser, { isLoading }] = useRegistrationMutation();
+  const [avatarPreview, setAvatarPreview] = useState(null);
 
   const {
     register,
@@ -41,25 +43,51 @@ const RegisterForm = () => {
   const selectedDistrictName = watch("district");
   const password = watch("password");
 
-  // Reset upazila when district changes
   useEffect(() => {
     setValue("upazila", "");
   }, [selectedDistrictName, setValue]);
 
-  useEffect(() => {
-    if (isSuccess) navigate("/login");
-  }, [isSuccess, navigate]);
+  // Memoize sorted districts — stable across renders
+  const sortedDistricts = useMemo(
+    () => [...districts].sort((a, b) => a.name.localeCompare(b.name)),
+    [],
+  );
 
-  const filteredUpazilas = upazilas
-    .filter((u) => {
-      const dist = districts.find((d) => d.name === selectedDistrictName);
-      return dist ? u.district_id === dist.id : false;
-    })
-    .sort((a, b) => a.name.localeCompare(b.name));
+  const filteredUpazilas = useMemo(() => {
+    const dist = districts.find((d) => d.name === selectedDistrictName);
+    if (!dist) return [];
+    return upazilas
+      .filter((u) => u.district_id === dist.id)
+      .sort((a, b) => a.name.localeCompare(b.name));
+  }, [selectedDistrictName]);
+
+  const handleAvatarChange = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    // Preview
+    const reader = new FileReader();
+    reader.onloadend = () => setAvatarPreview(reader.result);
+    reader.readAsDataURL(file);
+  };
 
   const onSubmit = async (data) => {
     try {
-      await registerUser(data).unwrap();
+      const { confirmPassword, avatar: avatarFileList, ...rest } = data;
+
+      const avatarFile = avatarFileList?.[0];
+      if (!avatarFile) {
+        toast.error("Please upload a profile picture.");
+        return;
+      }
+
+      const formData = new FormData();
+      Object.entries(rest).forEach(([key, value]) =>
+        formData.append(key, value),
+      );
+      formData.append("avatar", avatarFile);
+
+      await registerUser(formData).unwrap();
+      navigate("/login");
     } catch (err) {
       toast.error(err?.data?.message || "Registration failed.");
     }
@@ -78,6 +106,44 @@ const RegisterForm = () => {
         </header>
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
+          {/* Avatar Upload */}
+          <div className="flex flex-col items-center gap-3">
+            <div className="relative w-24 h-24 rounded-full border-2 border-dashed border-[var(--color-border-subtle)] overflow-hidden flex items-center justify-center bg-[var(--color-surface-main)] cursor-pointer group">
+              {avatarPreview ? (
+                <img
+                  src={avatarPreview}
+                  alt="Avatar preview"
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <ImagePlus
+                  size={28}
+                  className="text-[var(--color-content-muted)] group-hover:text-red-500 transition-colors"
+                />
+              )}
+              <input
+                type="file"
+                accept="image/*"
+                className="absolute inset-0 opacity-0 cursor-pointer"
+                {...register("avatar", {
+                  required: "Profile picture is required",
+                })}
+                onChange={(e) => {
+                  register("avatar").onChange(e); // keep RHF in sync
+                  handleAvatarChange(e);
+                }}
+              />
+            </div>
+            <span className="text-[10px] uppercase tracking-widest text-[var(--color-content-muted)]">
+              Profile Picture
+            </span>
+            {errors.avatar && (
+              <span className="text-xs text-red-500">
+                {errors.avatar.message}
+              </span>
+            )}
+          </div>
+
           {/* Name & Email */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <Input
@@ -85,9 +151,7 @@ const RegisterForm = () => {
               icon={UserIcon}
               placeholder="e.g. Alexander Pierce"
               error={errors.name?.message}
-              {...register("name", {
-                required: "Identity verification required",
-              })}
+              {...register("name", { required: "Name is required" })}
             />
             <Input
               label="Email Address"
@@ -104,15 +168,14 @@ const RegisterForm = () => {
             <Controller
               name="bloodGroup"
               control={control}
-              rules={{ required: "Medical data required" }}
+              rules={{ required: "Blood group is required" }}
               render={({ field }) => (
                 <Select
                   label="Blood Group"
                   icon={Droplet}
                   error={errors.bloodGroup?.message}
-                  value={field.value}
+                  {...field}
                   onChange={(e) => field.onChange(e.target.value)}
-                  onBlur={field.onBlur}
                 >
                   <option value="">Select Group</option>
                   {["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"].map(
@@ -129,14 +192,13 @@ const RegisterForm = () => {
             <Controller
               name="role"
               control={control}
-              rules={{ required: "Role designation required" }}
+              rules={{ required: "Role is required" }}
               render={({ field }) => (
                 <Select
                   label="System Role"
                   error={errors.role?.message}
-                  value={field.value}
+                  {...field}
                   onChange={(e) => field.onChange(e.target.value)}
-                  onBlur={field.onBlur}
                 >
                   <option value="donor">Donor</option>
                   <option value="volunteer">Volunteer</option>
@@ -150,23 +212,20 @@ const RegisterForm = () => {
             <Controller
               name="district"
               control={control}
-              rules={{ required: "Geographic data required" }}
+              rules={{ required: "District is required" }}
               render={({ field }) => (
                 <Select
                   label="District"
                   error={errors.district?.message}
-                  value={field.value}
+                  {...field}
                   onChange={(e) => field.onChange(e.target.value)}
-                  onBlur={field.onBlur}
                 >
                   <option value="">Select District</option>
-                  {[...districts]
-                    .sort((a, b) => a.name.localeCompare(b.name))
-                    .map((d) => (
-                      <option key={d.id} value={d.name}>
-                        {d.name}
-                      </option>
-                    ))}
+                  {sortedDistricts.map((d) => (
+                    <option key={d.id} value={d.name}>
+                      {d.name}
+                    </option>
+                  ))}
                 </Select>
               )}
             />
@@ -174,15 +233,14 @@ const RegisterForm = () => {
             <Controller
               name="upazila"
               control={control}
-              rules={{ required: "Sub-district required" }}
+              rules={{ required: "Upazila is required" }}
               render={({ field }) => (
                 <Select
                   label="Upazila"
                   error={errors.upazila?.message}
-                  value={field.value}
-                  onChange={(e) => field.onChange(e.target.value)}
-                  onBlur={field.onBlur}
                   disabled={!selectedDistrictName}
+                  {...field}
+                  onChange={(e) => field.onChange(e.target.value)}
                 >
                   <option value="">Select Upazila</option>
                   {filteredUpazilas.map((u) => (
@@ -198,23 +256,23 @@ const RegisterForm = () => {
           {/* Passwords */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <Input
-              label="Access Password"
+              label="Password"
               type="password"
               icon={Lock}
               error={errors.password?.message}
               {...register("password", {
-                required: "Required",
-                minLength: { value: 8, message: "Min 8 chars" },
+                required: "Password is required",
+                minLength: { value: 8, message: "Minimum 8 characters" },
               })}
             />
             <Input
-              label="Verify Password"
+              label="Confirm Password"
               type="password"
               icon={Lock}
               error={errors.confirmPassword?.message}
               {...register("confirmPassword", {
-                required: "Required",
-                validate: (v) => v === password || "Sequence mismatch",
+                required: "Please confirm your password",
+                validate: (v) => v === password || "Passwords do not match",
               })}
             />
           </div>
@@ -225,13 +283,13 @@ const RegisterForm = () => {
             className="w-full py-5 text-[11px] font-black uppercase tracking-[0.4em]"
             isLoading={isLoading}
           >
-            Finalize Enlistment
+            Create Account
           </Button>
         </form>
 
         <footer className="mt-10 text-center">
           <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[var(--color-content-muted)]">
-            Already Enlisted?{" "}
+            Already have an account?{" "}
             <Link
               to="/login"
               className="text-[var(--color-content-primary)] hover:text-red-600 transition-colors inline-flex items-center gap-2 ml-2"

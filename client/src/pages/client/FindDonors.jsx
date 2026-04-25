@@ -72,7 +72,7 @@ const FindDonors = () => {
     return <Loader />;
   }
   return (
-    <div className="flex flex-col lg:flex-row gap-8 animate-in fade-in duration-500 pb-20">
+    <div className="max-w-7xl mx-auto px-6 my-20 flex flex-col lg:flex-row gap-8 animate-in fade-in duration-500 pb-20">
       {/* 1. SIDEBAR: TECHNICAL CONTROL PANEL */}
       <aside className="w-full lg:w-80 group sticky top-20 ">
         <div className="bg-[var(--color-surface-card)] border border-[var(--color-border-default)] rounded-[var(--radius-xl)] overflow-hidden relative lg:sticky lg:top-28 transition-all duration-300 hover:border-[var(--color-border-strong)] shadow-sm">

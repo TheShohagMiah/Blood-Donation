@@ -1,9 +1,10 @@
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 
+const baseUrl = "http://localhost:9000/api";
 export const authApi = createApi({
   reducerPath: "lifeFlow",
   baseQuery: fetchBaseQuery({
-    baseUrl: "http://localhost:9000/api/auth",
+    baseUrl: `${baseUrl}/auth`,
     credentials: "include",
   }),
   tagTypes: ["User"],
@@ -29,6 +30,15 @@ export const authApi = createApi({
     updateProfile: builder.mutation({
       query: (data) => ({
         url: "/update-profile",
+        method: "PATCH",
+        body: data,
+      }),
+      invalidatesTags: ["User"],
+    }),
+
+    updateProfileAvatar: builder.mutation({
+      query: (data) => ({
+        url: "/update-avatar",
         method: "PATCH",
         body: data,
       }),
@@ -120,4 +130,5 @@ export const {
   useDeleteUserMutation,
   useGetDonorsQuery,
   useUpdatePasswordMutation,
+  useUpdateProfileAvatarMutation,
 } = authApi;

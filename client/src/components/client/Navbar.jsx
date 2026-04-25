@@ -84,20 +84,20 @@ const Navbar = () => {
 
   return (
     <nav
-      className={`fixed top-0 w-full z-[100] transition-all duration-500 border-b
+      className={`fixed top-0 w-full z-100 transition-all duration-500 border-b
       ${
         isScrolled
-          ? "backdrop-blur-xl border-[var(--color-border-default)] py-3 shadow-md"
-          : "bg-transparent border-[var(--color-border-default)] py-6"
+          ? "backdrop-blur-xl border-border-default py-3 shadow-md"
+          : "bg-transparent border-border-default py-6"
       }`}
     >
       <div className="max-w-7xl mx-auto px-6 flex items-center justify-between">
         {/* Brand */}
         <Link to="/" className="flex items-center gap-2.5 group">
-          <div className="bg-[var(--color-primary-600)] p-2 rounded-md group-hover:rotate-[12deg] transition-transform duration-300">
+          <div className="bg-(--color-primary-600) p-2 rounded-md group-hover:rotate-[12deg] transition-transform duration-300">
             <Droplet size={20} className="text-white fill-current" />
           </div>
-          <span className="text-xl font-black uppercase tracking-tighter text-[var(--color-content-primary)]">
+          <span className="text-xl font-black uppercase tracking-tighter text-content-primary">
             <EncryptedText
               text="LifeFlow"
               encryptedClassName="text-neutral-500"
@@ -139,7 +139,7 @@ const Navbar = () => {
                   aria-label="Open profile menu"
                   className="relative group focus:outline-none"
                 >
-                  <div className="w-9 h-9 rounded-md border-2 border-[var(--color-border-default)] overflow-hidden group-hover:border-[var(--color-primary-600)] transition-all duration-300">
+                  <div className="w-9 h-9 rounded-full border-2 border-primary-600 overflow-hidden group-hover:border-[var(--color-primary-600)] transition-all duration-300">
                     {user?.avatar ? (
                       <img
                         src={user.avatar}

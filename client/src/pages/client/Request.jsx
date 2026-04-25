@@ -79,7 +79,7 @@ const BloodRequests = () => {
   }
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-700 pb-10">
+    <div className="max-w-7xl mx-auto px-6 my-20 space-y-8 animate-in fade-in duration-700 pb-10">
       {/* Filter Bar */}
       <div className="bg-[var(--color-surface-card)] border border-[var(--color-border-default)] rounded-[var(--radius-xl)] p-2 shadow-sm">
         <form
